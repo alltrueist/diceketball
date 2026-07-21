@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diceketball</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <style>
+        :root {
+            --bg-color: #222222;
+            --panel-bg: rgba(34, 34, 34, 0.95);
+            --text-main: #FFFFFF;
+            --text-muted: #888888;
+            --boost-color: #4ADE80; /* Bright Mint Green */
+            --reduce-color: #F87171; /* Bright Coral Red */
+            --highlight-bg: #333333; /* Slate Gray for winning cell */
+            --highlight-border: #FBBF24; /* Gold */
+        }
+
+        body {
+            font-family: 'Impact', 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: url('bg-hardwood.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--panel-bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            padding-bottom: 120px;
+        }
+
+        header {
+            text-align: center;
+            padding: 15px 15px 0 15px;
+        }
+
+        .logo {
+            max-width: 250px;
+            height: auto;
+        }
+
+        /* Series Tracker */
+        .series-banner {
+            text-align: center;
+            background-color: #111;
+            color: var(--highlight-border);
+            padding: 8px;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            border-top: 1px solid #333;
+            border-bottom: 2px solid #000;
+            margin-bottom: 10px;
+        }
+
+        .series-name {
+            color: var(--text-main);
+            font-size: 1.1rem;
+        }
+
+        /* Matchup Section */
+        .matchup-zone {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 2px solid #444;
+        }
+
+        .player-card {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #444;
+            margin-bottom: 10px;
+            border: 2px solid var(--text-main);
+            object-fit: cover;
+            display: block;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            background-color: #111;
+            color: var(--text-main);
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .traits {
+            font-family: sans-serif;
+            font-size: 0.75rem;
+            min-height: 40px;
+            color: var(--text-muted);
+        }
+
+        .vs-badge {
+            width: 40px;
+            height: auto;
+        }
+
+        /* Box Score */
+        .box-score {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1a1a1a;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        .stat-name {
+            flex: 1;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 10px 5px;
+        }
+
+        .stat-cell {
+            width: 80px;
+            text-align: center;
+            padding: 10px 5px;
+            font-size: 1.2rem;
+            position: relative;
+            transition: background-color 0.3s;
+        }
+
+        /* Winner Highlighting */
+        .winner-cell {
+            background-color: var(--highlight-bg);
+            border-left: 3px solid var(--highlight-border);
+            border-right: 3px solid var(--highlight-border);
+            color: var(--highlight-border);
+        }
+        
+        .stat-cell.boost { color: var(--boost-color); }
+        .stat-cell.reduce { color: var(--reduce-color); }
+
+        .modifier-icon {
+            font-size: 0.7rem;
+            vertical-align: super;
+            margin-left: 2px;
+        }
+
+        .star {
+            font-size: 0.8rem;
+            color: var(--highlight-border);
+            margin-left: 4px;
+            display: none;
+        }
+
+        .winner-cell .star {
+            display: inline;
+        }
+
+        /* Sticky Controls */
+        .controls {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 600px;
+            background: linear-gradient(transparent, rgba(17,17,17,0.95) 30%);
+            padding: 20px 0 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .roll-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .roll-btn:active {
+            transform: scale(0.92);
+        }
+
+        .roll-btn:disabled {
+            filter: grayscale(100%);
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .roll-btn img {
+            width: 100px;
+            height: auto;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8));
+        }
+
+        .status-text {
+            text-align: center;
+            font-family: sans-serif;
+            margin-bottom: 10px;
+            color: var(--highlight-border);
+            font-weight: bold;
+        }
+
+        /* Secondary Game Buttons */
+        .btn-action {
+            background-color: var(--highlight-border);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-family: 'Impact', sans-serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 5px;
+            display: none;
+        }
+
+        .btn-concede {
+            background-color: #555;
+            color: #fff;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-family: sans-serif;
+        }
+
+        /* Splash Screen Overlay */
+        .splash-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .splash-content {
+            background-color: #111;
+            border: 3px solid var(--highlight-border);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .splash-title {
+            color: var(--boost-color);
+            font-size: 2.2rem;
+            margin-top: 0;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+
+        .splash-subtitle {
+            color: var(--text-muted);
+            font-family: sans-serif;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .splash-stats {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #333;
+            overflow: hidden;
+        }
+
+        .splash-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .splash-col-center {
+            flex: 0.8;
+            background: #222;
+            border-left: 1px solid #333;
+            border-right: 1px solid #333;
+        }
+
+        .splash-header {
+            font-size: 1.2rem;
+            color: var(--highlight-border);
+            padding: 10px 0;
+            background: #000;
+            border-bottom: 1px solid #333;
+        }
+
+        .splash-cell {
+            padding: 8px 0;
+            font-size: 1.3rem;
+            border-bottom: 1px solid #222;
+        }
+
+        .splash-cell-label {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            font-family: sans-serif;
+            font-weight: bold;
+            color: var(--text-muted);
+            border-bottom: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .splash-cell:last-child, .splash-cell-label:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <img src="logo.png" alt="Diceketball" class="logo" onerror="this.outerHTML='<h1>DICEKETBALL</h1>'">
+    </header>
+
+    <div class="series-banner" id="series-banner">
+        SERIES: <span id="p1-name" class="series-name">P1</span> <span id="p1-score">0</span> - <span id="p2-score">0</span> <span id="p2-name" class="series-name">P2</span>
+    </div>
+
+    <div class="matchup-zone">
+        <div class="player-card">
+            <img id="p1-avatar" src="" alt="?" class="avatar" onerror="this.style.display='none'">
+            <select id="p1-profile" onchange="updateProfile('p1')">
+                <option value="none" selected disabled>Select Archetype...</option>
+                <option value="playmaker">Playmaker</option>
+                <option value="sniper">Sniper</option>
+                <option value="defender">Defender</option>
+                <option value="dunker">Dunker</option>
+                <option value="rimprotector">Rim Protector</option>
+                <option value="stretch5">Stretch 5</option>
+            </select>
+            <div id="p1-traits" class="traits">Select an archetype to view traits.</div>
+        </div>
+
+        <img src="vs-badge.png" alt="VS" class="vs-badge" onerror="this.outerHTML='<h2 style=\'margin:0;\'>VS</h2>'">
+
+        <div class="player-card">
+            <img id="p2-avatar" src="" alt="?" class="avatar" onerror="this.style.display='none'">
+            <select id="p2-profile" onchange="updateProfile('p2')">
+                <option value="none" selected disabled>Select Archetype...</option>
+                <option value="playmaker">Playmaker</option>
+                <option value="sniper">Sniper</option>
+                <option value="defender">Defender</option>
+                <option value="dunker">Dunker</option>
+                <option value="rimprotector">Rim Protector</option>
+                <option value="stretch5">Stretch 5</option>
+            </select>
+            <div id="p2-traits" class="traits">Select an archetype to view traits.</div>
+        </div>
+    </div>
+
+    <div class="status-text" id="status-text">Waiting for Players to select archetypes...</div>
+
+    <div class="box-score" id="box-score">
+        <!-- Rows Generated by JS -->
+    </div>
+
+    <div class="controls">
+        <button id="roll-btn" class="roll-btn" onclick="rollNext()" disabled>
+            <img src="roll-button.png" alt="Roll Dice" onerror="this.outerHTML='<div style=\'background:#E56B1F;padding:15px 30px;border-radius:30px;color:#fff;font-size:1.5rem;\'>ROLL DICE</div>'">
+        </button>
+        <button id="next-game-btn" class="btn-action" onclick="resetMatch(false)">NEXT GAME</button>
+        <button id="concede-btn" class="btn-action btn-concede" onclick="resetMatch(true)">Concede Series & Reset</button>
+    </div>
+</div>
+
+<!-- Splash Screen Modal -->
+<div class="splash-overlay" id="splash-overlay">
+    <div class="splash-content">
+        <h1 class="splash-title" id="splash-champ">🏆 PLAYER 1 🏆</h1>
+        <div class="splash-subtitle">Series Champion</div>
+
+        <div class="splash-stats">
+            <div class="splash-col">
+                <div class="splash-header" id="splash-p1-header">P1</div>
+                <div class="splash-cell" id="splash-p1-ppg">-</div>
+                <div class="splash-cell" id="splash-p1-apg">-</div>
+                <div class="splash-cell" id="splash-p1-rpg">-</div>
+                <div class="splash-cell" id="splash-p1-spg">-</div>
+                <div class="splash-cell" id="splash-p1-bpg">-</div>
+                <div class="splash-cell" id="splash-p1-fgp">-</div>
+            </div>
+            
+            <div class="splash-col splash-col-center">
+                <div class="splash-header" style="color:var(--text-muted); font-size: 0.9rem; padding: 13px 0;">AVERAGES</div>
+                <div class="splash-cell-label">PPG</div>
+                <div class="splash-cell-label">APG</div>
+                <div class="splash-cell-label">RPG</div>
+                <div class="splash-cell-label">SPG</div>
+                <div class="splash-cell-label">BPG</div>
+                <div class="splash-cell-label">FG%</div>
+            </div>
+
+            <div class="splash-col">
+                <div class="splash-header" id="splash-p2-header">P2</div>
+                <div class="splash-cell" id="splash-p2-ppg">-</div>
+                <div class="splash-cell" id="splash-p2-apg">-</div>
+                <div class="splash-cell" id="splash-p2-rpg">-</div>
+                <div class="splash-cell" id="splash-p2-spg">-</div>
+                <div class="splash-cell" id="splash-p2-bpg">-</div>
+                <div class="splash-cell" id="splash-p2-fgp">-</div>
+            </div>
+        </div>
+
+        <button class="btn-action" style="display: block; width: 100%;" onclick="resetMatch(true)">START NEW SERIES</button>
+    </div>
+</div>
+
+<script>
+    const profiles = {
+        playmaker: { img: 'avatar-playmaker.png', desc: 'Boost: AST x2, FT x2<br>Reduce: BLK/2', abbr: 'PMK' },
+        sniper: { img: 'avatar-sniper.png', desc: 'Boost: 3PT Extra Roll<br>Reduce: TO x2', abbr: 'SNP' },
+        defender: { img: 'avatar-defender.png', desc: 'Boost: BLK x2, STL x2<br>Reduce: Points/2', abbr: 'DEF' },
+        dunker: { img: 'avatar-dunker.png', desc: 'Boost: 2PT Extra Roll, REB x1.5<br>Reduce: 3PT/2', abbr: 'DNK' },
+        rimprotector: { img: 'avatar-rimprotector.png', desc: 'Boost: BLK x2, REB x1.5<br>Reduce: FT/2, AST/2', abbr: 'RIM' },
+        stretch5: { img: 'avatar-stretch5.png', desc: 'Boost: 3PT Extra Roll<br>Reduce: OREB/2', abbr: 'ST5' }
+    };
+
+    const statsConfig = [
+        { id: 'fg2', name: '2-Point FG' },
+        { id: 'fg2_pct', name: '2-Point %', isCalc: true },
+        { id: 'fg3', name: '3-Point FG' },
+        { id: 'fg3_pct', name: '3-Point %', isCalc: true },
+        { id: 'ft', name: 'Free Throws' },
+        { id: 'ft_pct', name: 'Free Throw %', isCalc: true },
+        { id: 'pts', name: 'Total Points', isCalc: true, large: true },
+        { id: 'efg', name: 'eFG%', isCalc: true },
+        { id: 'oreb', name: 'Offensive Rebounds' },
+        { id: 'dreb', name: 'Defensive Rebounds' },
+        { id: 'treb', name: 'Total Rebounds', isCalc: true },
+        { id: 'ast', name: 'Assists' },
+        { id: 'to', name: 'Turnovers', lowerIsBetter: true },
+        { id: 'ast_to', name: 'Assist:TO Ratio', isCalc: true },
+        { id: 'stl', name: 'Steals' },
+        { id: 'blk', name: 'Blocks' },
+        { id: 'pf', name: 'Personal Fouls', lowerIsBetter: true }
+    ];
+
+    const rollSequence = ['fg2', 'fg3', 'ft', 'oreb', 'dreb', 'ast', 'to', 'stl', 'blk', 'pf'];
+    let currentStep = 0;
+    
+    // State Storage
+    let p1Data = {}, p2Data = {};
+    let p1SeriesWins = 0;
+    let p2SeriesWins = 0;
+
+    // Series Stat Accumulators
+    let gamesPlayed = 0;
+    let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
+    let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
+
+    function initBoard() {
+        const board = document.getElementById('box-score');
+        board.innerHTML = '';
+        statsConfig.forEach(stat => {
+            board.innerHTML += `
+                <div class="stat-row" id="row-${stat.id}" style="${stat.large ? 'margin: 10px 0; border: 2px solid #555;' : ''}">
+                    <div class="stat-cell" id="p1-${stat.id}">-</div>
+                    <div class="stat-name" style="${stat.large ? 'color:#fff; font-size:1.1rem;' : ''}">${stat.name}</div>
+                    <div class="stat-cell" id="p2-${stat.id}">-</div>
+                </div>
+            `;
+        });
+    }
+
+    function checkReadyStatus() {
+        const p1 = document.getElementById('p1-profile').value;
+        const p2 = document.getElementById('p2-profile').value;
+        const rollBtn = document.getElementById('roll-btn');
+
+        if (p1 !== 'none' && p2 !== 'none' && currentStep === 0) {
+            rollBtn.disabled = false;
+            document.getElementById('status-text').innerText = "Ready for Tip Off! Click Roll to Start.";
+        } else {
+            rollBtn.disabled = true;
+        }
+    }
+
+    function updateProfile(player) {
+        const val = document.getElementById(`${player}-profile`).value;
+        const avatarImg = document.getElementById(`${player}-avatar`);
+        if (val !== 'none') {
+            avatarImg.src = profiles[val].img;
+            avatarImg.style.display = 'block';
+            document.getElementById(`${player}-traits`).innerHTML = profiles[val].desc;
+            document.getElementById(`${player}-name`).innerText = profiles[val].abbr;
+        }
+        checkReadyStatus();
+    }
+
+    function resetMatch(isNewSeries) {
+        currentStep = 0;
+        p1Data = {};
+        p2Data = {};
+        initBoard();
+
+        document.getElementById('roll-btn').style.display = "block";
+        document.getElementById('concede-btn').style.display = "none";
+        document.getElementById('next-game-btn').style.display = "none";
+
+        if (isNewSeries) {
+            p1SeriesWins = 0;
+            p2SeriesWins = 0;
+            document.getElementById('p1-score').innerText = p1SeriesWins;
+            document.getElementById('p2-score').innerText = p2SeriesWins;
+            
+            // Reset banner names
+            document.getElementById('p1-name').innerText = 'P1';
+            document.getElementById('p2-name').innerText = 'P2';
+
+            // Reset accumulators
+            gamesPlayed = 0;
+            p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
+            p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
+
+            document.getElementById('splash-overlay').style.display = 'none';
+
+            document.getElementById('p1-profile').value = 'none';
+            document.getElementById('p2-profile').value = 'none';
+            document.getElementById('p1-profile').disabled = false;
+            document.getElementById('p2-profile').disabled = false;
+
+            document.getElementById('p1-avatar').src = '';
+            document.getElementById('p1-avatar').style.display = 'none';
+            document.getElementById('p2-avatar').src = '';
+            document.getElementById('p2-avatar').style.display = 'none';
+            
+            document.getElementById('p1-traits').innerHTML = "Select an archetype to view traits.";
+            document.getElementById('p2-traits').innerHTML = "Select an archetype to view traits.";
+
+            document.getElementById('status-text').innerText = "Waiting for Players to select archetypes...";
+            document.getElementById('roll-btn').disabled = true;
+        } else {
+            document.getElementById('status-text').innerText = `Game ${gamesPlayed + 1} Ready! Click Roll for Tip Off.`;
+            document.getElementById('roll-btn').disabled = false;
+            document.getElementById('concede-btn').style.display = "inline-block";
+        }
+    }
+
+    function rollD(sides) { return Math.floor(Math.random() * sides) + 1; }
+
+    function processRoll(player, statId, profile) {
+        let makes = 0, attempts = 6, isBoost = false, isReduce = false;
+        if (statId === 'fg2') {
+            if (profile === 'dunker') { attempts = 12; makes = rollD(12); isBoost = true; } else { makes = rollD(6); }
+        } else if (statId === 'fg3') {
+            if (profile === 'sniper' || profile === 'stretch5') { attempts = 12; makes = rollD(12); isBoost = true; } else { makes = rollD(6); }
+            if (profile === 'dunker') { makes = Math.floor(makes / 2); isReduce = true; }
+        } else if (statId === 'ft') {
+            makes = rollD(6);
+            if (profile === 'playmaker') { makes *= 2; if (makes > attempts) attempts = makes; isBoost = true; }
+            if (profile === 'rimprotector') { makes = Math.floor(makes / 2); isReduce = true; }
+        } else if (statId === 'oreb') {
+            makes = rollD(6);
+            if (profile === 'stretch5') { makes = Math.floor(makes / 2); isReduce = true; }
+        } else if (statId === 'dreb') { makes = rollD(6); }
+        else if (statId === 'ast') {
+            makes = rollD(6);
+            if (profile === 'playmaker') { makes *= 2; isBoost = true; }
+            if (profile === 'rimprotector') { makes = Math.floor(makes / 2); isReduce = true; }
+        } else if (statId === 'to') {
+            makes = rollD(6);
+            if (profile === 'sniper') { makes *= 2; isReduce = true; }
+        } else if (statId === 'stl') {
+            makes = rollD(6);
+            if (profile === 'defender') { makes *= 2; isBoost = true; }
+        } else if (statId === 'blk') {
+            makes = rollD(6);
+            if (profile === 'defender' || profile === 'rimprotector') { makes *= 2; isBoost = true; }
+            if (profile === 'playmaker') { makes = Math.floor(makes / 2); isReduce = true; }
+        } else if (statId === 'pf') { makes = rollD(6); }
+
+        return { makes, attempts, isBoost, isReduce };
+    }
+
+    function calculateDerived(pData, profile) {
+        pData.fg2_pct = pData.fg2_attempts > 0 ? Math.round((pData.fg2_makes / pData.fg2_attempts) * 100) : 0;
+        pData.fg3_pct = pData.fg3_attempts > 0 ? Math.round((pData.fg3_makes / pData.fg3_attempts) * 100) : 0;
+        pData.ft_pct = pData.ft_attempts > 0 ? Math.round((pData.ft_makes / pData.ft_attempts) * 100) : 0;
+
+        let rawPoints = (pData.fg2_makes * 2) + (pData.fg3_makes * 3) + pData.ft_makes;
+        if (profile === 'defender') { pData.pts = Math.floor(rawPoints / 2); pData.pts_isReduce = true; } 
+        else { pData.pts = rawPoints; }
+
+        let totalFGA = (pData.fg2_attempts || 0) + (pData.fg3_attempts || 0);
+        pData.efg = totalFGA > 0 ? Math.round(((pData.fg2_makes + (1.5 * pData.fg3_makes)) / totalFGA) * 100) : 0;
+
+        let rawReb = (pData.oreb_makes || 0) + (pData.dreb_makes || 0);
+        if (profile === 'dunker' || profile === 'rimprotector') { pData.treb = Math.floor(rawReb * 1.5); pData.treb_isBoost = true; } 
+        else { pData.treb = rawReb; }
+
+        let ast = pData.ast_makes || 0;
+        let to = pData.to_makes || 0;
+        pData.ast_to_raw = to === 0 ? ast : parseFloat((ast / to).toFixed(1));
+        pData.ast_to_str = to === 0 ? `${ast}:0` : `${pData.ast_to_raw}:1`;
+    }
+
+    function renderCell(playerPrefix, statId, text, isBoost, isReduce) {
+        const el = document.getElementById(`${playerPrefix}-${statId}`);
+        let colorClass = isBoost ? 'boost' : (isReduce ? 'reduce' : '');
+        let icon = isBoost ? '<span class="modifier-icon">(+)</span>' : (isReduce ? '<span class="modifier-icon">(-)</span>' : '');
+        el.innerHTML = `${text}${icon}<span class="star">★</span>`;
+        if (colorClass) el.classList.add(colorClass);
+    }
+
+    function evaluateWinner(statId, val1, val2, lowerIsBetter = false) {
+        const el1 = document.getElementById(`p1-${statId}`);
+        const el2 = document.getElementById(`p2-${statId}`);
+        el1.classList.remove('winner-cell');
+        el2.classList.remove('winner-cell');
+
+        if (val1 === val2) {
+            el1.classList.add('winner-cell');
+            el2.classList.add('winner-cell');
+        } else if ((val1 > val2 && !lowerIsBetter) || (val1 < val2 && lowerIsBetter)) {
+            el1.classList.add('winner-cell');
+        } else {
+            el2.classList.add('winner-cell');
+        }
+    }
+
+    function triggerSeriesEnd(champName) {
+        const p1Profile = document.getElementById('p1-profile').value;
+        const p2Profile = document.getElementById('p2-profile').value;
+        
+        document.getElementById('splash-champ').innerText = `🏆 ${champName} 🏆`;
+        document.getElementById('splash-p1-header').innerText = profiles[p1Profile].abbr;
+        document.getElementById('splash-p2-header').innerText = profiles[p2Profile].abbr;
+
+        // Calculate P1 Averages
+        document.getElementById('splash-p1-ppg').innerText = (p1SeriesStats.pts / gamesPlayed).toFixed(1);
+        document.getElementById('splash-p1-apg').innerText = (p1SeriesStats.ast / gamesPlayed).toFixed(1);
+        document.getElementById('splash-p1-rpg').innerText = (p1SeriesStats.treb / gamesPlayed).toFixed(1);
+        document.getElementById('splash-p1-spg').innerText = (p1SeriesStats.stl / gamesPlayed).toFixed(1);
+        document.getElementById('splash-p1-bpg').innerText = (p1SeriesStats.blk / gamesPlayed).toFixed(1);
+        let p1Fgp = p1SeriesStats.fg_attempts > 0 ? Math.round((p1SeriesStats.fg_makes / p1SeriesStats.fg_attempts) * 100) : 0;
+        document.getElementById('splash-p1-fgp').innerText = `${p1Fgp}%`;
+
+        // Calculate P2 Averages
+        document.getElementById('splash-p2-ppg').innerText = (p2SeriesStats.pts / gamesPlayed).toFixed(1);
+        document.getElementById('splash-p2-apg').innerText = (p2SeriesStats.ast / gamesPlayed).toFixed(1);
+        document.getElementById('splash-p2-rpg').innerText = (p2SeriesStats.treb / gamesPlayed).toFixed(1);
+        document.getElementById('splash-p2-spg').innerText = (p2SeriesStats.stl / gamesPlayed).toFixed(1);
+        document.getElementById('splash-p2-bpg').innerText = (p2SeriesStats.blk / gamesPlayed).toFixed(1);
+        let p2Fgp = p2SeriesStats.fg_attempts > 0 ? Math.round((p2SeriesStats.fg_makes / p2SeriesStats.fg_attempts) * 100) : 0;
+        document.getElementById('splash-p2-fgp').innerText = `${p2Fgp}%`;
+
+        document.getElementById('splash-overlay').style.display = 'flex';
+    }
+
+    function evaluateGameWinner() {
+        let p1Wins = 0, p2Wins = 0;
+        
+        statsConfig.forEach(s => {
+            if (document.getElementById(`p1-${s.id}`).classList.contains('winner-cell')) p1Wins++;
+            if (document.getElementById(`p2-${s.id}`).classList.contains('winner-cell')) p2Wins++;
+        });
+
+        gamesPlayed++;
+
+        // Accumulate Stats for Averages
+        p1SeriesStats.pts += p1Data.pts;
+        p1SeriesStats.ast += p1Data.ast_makes;
+        p1SeriesStats.treb += p1Data.treb;
+        p1SeriesStats.stl += p1Data.stl_makes;
+        p1SeriesStats.blk += p1Data.blk_makes;
+        p1SeriesStats.fg_makes += (p1Data.fg2_makes + p1Data.fg3_makes);
+        p1SeriesStats.fg_attempts += (p1Data.fg2_attempts + p1Data.fg3_attempts);
+
+        p2SeriesStats.pts += p2Data.pts;
+        p2SeriesStats.ast += p2Data.ast_makes;
+        p2SeriesStats.treb += p2Data.treb;
+        p2SeriesStats.stl += p2Data.stl_makes;
+        p2SeriesStats.blk += p2Data.blk_makes;
+        p2SeriesStats.fg_makes += (p2Data.fg2_makes + p2Data.fg3_makes);
+        p2SeriesStats.fg_attempts += (p2Data.fg2_attempts + p2Data.fg3_attempts);
+
+        if (p1Wins > p2Wins) {
+            p1SeriesWins++;
+            document.getElementById('status-text').innerText = `PLAYER 1 WINS GAME ${gamesPlayed}!`;
+        } else if (p2Wins > p1Wins) {
+            p2SeriesWins++;
+            document.getElementById('status-text').innerText = `PLAYER 2 WINS GAME ${gamesPlayed}!`;
+        } else {
+            document.getElementById('status-text').innerText = `GAME ${gamesPlayed} IS A DRAW!`;
+        }
+
+        document.getElementById('p1-score').innerText = p1SeriesWins;
+        document.getElementById('p2-score').innerText = p2SeriesWins;
+
+        if (p1SeriesWins >= 4 || p2SeriesWins >= 4) {
+            triggerSeriesEnd(p1SeriesWins >= 4 ? "PLAYER 1" : "PLAYER 2");
+        } else {
+            document.getElementById('next-game-btn').style.display = "inline-block";
+        }
+    }
+
+    function rollNext() {
+        if (currentStep >= rollSequence.length) return;
+
+        if (currentStep === 0) {
+            document.getElementById('p1-profile').disabled = true;
+            document.getElementById('p2-profile').disabled = true;
+            document.getElementById('concede-btn').style.display = "inline-block";
+        }
+
+        const statToRoll = rollSequence[currentStep];
+        const p1Profile = document.getElementById('p1-profile').value;
+        const p2Profile = document.getElementById('p2-profile').value;
+
+        const res1 = processRoll('p1', statToRoll, p1Profile);
+        const res2 = processRoll('p2', statToRoll, p2Profile);
+
+        p1Data[`${statToRoll}_makes`] = res1.makes; p1Data[`${statToRoll}_attempts`] = res1.attempts;
+        p2Data[`${statToRoll}_makes`] = res2.makes; p2Data[`${statToRoll}_attempts`] = res2.attempts;
+
+        if (['fg2', 'fg3', 'ft'].includes(statToRoll)) {
+            renderCell('p1', statToRoll, `${res1.makes}/${res1.attempts}`, res1.isBoost, res1.isReduce);
+            renderCell('p2', statToRoll, `${res2.makes}/${res2.attempts}`, res2.isBoost, res2.isReduce);
+            evaluateWinner(statToRoll, res1.makes, res2.makes);
+        } else {
+            renderCell('p1', statToRoll, res1.makes, res1.isBoost, res1.isReduce);
+            renderCell('p2', statToRoll, res2.makes, res2.isBoost, res2.isReduce);
+            let lowerIsBetter = ['to', 'pf'].includes(statToRoll);
+            evaluateWinner(statToRoll, res1.makes, res2.makes, lowerIsBetter);
+        }
+
+        calculateDerived(p1Data, p1Profile);
+        calculateDerived(p2Data, p2Profile);
+
+        if (statToRoll === 'fg2') {
+            renderCell('p1', 'fg2_pct', `${p1Data.fg2_pct}%`);
+            renderCell('p2', 'fg2_pct', `${p2Data.fg2_pct}%`);
+            evaluateWinner('fg2_pct', p1Data.fg2_pct, p2Data.fg2_pct);
+        }
+        if (statToRoll === 'fg3') {
+            renderCell('p1', 'fg3_pct', `${p1Data.fg3_pct}%`);
+            renderCell('p2', 'fg3_pct', `${p2Data.fg3_pct}%`);
+            evaluateWinner('fg3_pct', p1Data.fg3_pct, p2Data.fg3_pct);
+        }
+        if (statToRoll === 'ft') {
+            renderCell('p1', 'ft_pct', `${p1Data.ft_pct}%`);
+            renderCell('p2', 'ft_pct', `${p2Data.ft_pct}%`);
+            evaluateWinner('ft_pct', p1Data.ft_pct, p2Data.ft_pct);
+
+            renderCell('p1', 'pts', p1Data.pts, false, p1Data.pts_isReduce);
+            renderCell('p2', 'pts', p2Data.pts, false, p2Data.pts_isReduce);
+            evaluateWinner('pts', p1Data.pts, p2Data.pts);
+
+            renderCell('p1', 'efg', `${p1Data.efg}%`);
+            renderCell('p2', 'efg', `${p2Data.efg}%`);
+            evaluateWinner('efg', p1Data.efg, p2Data.efg);
+        }
+        
+        if (statToRoll === 'dreb') {
+            renderCell('p1', 'treb', p1Data.treb, p1Data.treb_isBoost);
+            renderCell('p2', 'treb', p2Data.treb, p2Data.treb_isBoost);
+            evaluateWinner('treb', p1Data.treb, p2Data.treb);
+        }
+
+        if (statToRoll === 'to') {
+            renderCell('p1', 'ast_to', p1Data.ast_to_str);
+            renderCell('p2', 'ast_to', p2Data.ast_to_str);
+            evaluateWinner('ast_to', p1Data.ast_to_raw, p2Data.ast_to_raw);
+        }
+
+        currentStep++;
+        
+        if (currentStep < rollSequence.length) {
+            const nextId = rollSequence[currentStep];
+            const nextName = statsConfig.find(s => s.id === nextId).name;
+            document.getElementById('status-text').innerText = `Next Roll: ${nextName}`;
+        } else {
+            document.getElementById('roll-btn').style.display = "none";
+            document.getElementById('concede-btn').style.display = "none";
+            evaluateGameWinner();
+        }
+    }
+
+    initBoard();
+</script>
+
+<!-- Register PWA Service Worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js');
+    });
+  }
+</script>
+
+</body>
+</html>
