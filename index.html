@@ -315,65 +315,49 @@
             letter-spacing: 1px;
         }
 
-        .splash-stats {
-            display: flex;
+        /* New Table-Based Stats Alignment */
+        .stats-table {
             width: 100%;
-            justify-content: space-between;
-            margin-bottom: clamp(15px, 4vw, 25px);
+            border-collapse: separate; 
+            border-spacing: 0;
             background: #1a1a1a;
             border-radius: 8px;
             border: 1px solid #333;
+            margin-bottom: clamp(15px, 4vw, 25px);
             overflow: hidden;
         }
 
-        .splash-col {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+        .stats-table th, .stats-table td {
+            text-align: center;
+            width: 33.33%; 
         }
 
-        .splash-col-center {
-            flex: 0.8;
-            background: #222;
-            border-left: 1px solid #333;
-            border-right: 1px solid #333;
-        }
-
-        /* Fully Responsive, Uniform Splash Header Fix */
-        .splash-header {
-            font-size: clamp(1rem, 2.5vw, 1.3rem);
-            color: var(--highlight-border);
-            padding: 10px 0;
+        .stats-table th {
             background: #000;
+            padding: 10px 5px;
+            color: var(--highlight-border);
             border-bottom: 1px solid #333;
-            height: clamp(80px, 18vw, 110px); 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end; 
-            box-sizing: border-box;
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            vertical-align: bottom; /* Forces perfect bottom alignment of avatars and text */
         }
 
-        .splash-cell {
+        .stats-table td {
             padding: clamp(6px, 1.5vw, 10px) 0;
             font-size: clamp(1.1rem, 3vw, 1.4rem);
             border-bottom: 1px solid #222;
         }
 
-        .splash-cell-label {
-            padding: clamp(6px, 1.5vw, 10px) 0;
+        .stats-table .label-col {
+            background: #222;
+            border-left: 1px solid #333;
+            border-right: 1px solid #333;
             font-size: clamp(0.75rem, 2vw, 0.95rem);
             font-family: sans-serif;
             font-weight: bold;
             color: var(--text-muted);
-            border-bottom: 1px solid #222;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
         }
 
-        .splash-cell:last-child, .splash-cell-label:last-child {
+        .stats-table tr:last-child td {
             border-bottom: none;
         }
 
@@ -417,6 +401,9 @@
             border: 2px solid var(--highlight-border);
             margin-bottom: 5px;
             object-fit: cover;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
     </style>
@@ -513,32 +500,41 @@
             <img id="game-p2-avatar" src="" class="game-splash-avatar">
         </div>
 
-        <div class="splash-stats" style="margin-bottom: 20px;">
-            <div class="splash-col">
-                <div class="splash-cell" id="game-p1-pts">-</div>
-                <div class="splash-cell" id="game-p1-reb">-</div>
-                <div class="splash-cell" id="game-p1-ast">-</div>
-                <div class="splash-cell" id="game-p1-fgp">-</div>
-                <div class="splash-cell" id="game-p1-blk">-</div>
-                <div class="splash-cell" id="game-p1-stl">-</div>
-            </div>
-            <div class="splash-col splash-col-center">
-                <div class="splash-cell-label">PTS</div>
-                <div class="splash-cell-label">REB</div>
-                <div class="splash-cell-label">AST</div>
-                <div class="splash-cell-label">FG%</div>
-                <div class="splash-cell-label">BLK</div>
-                <div class="splash-cell-label">STL</div>
-            </div>
-            <div class="splash-col">
-                <div class="splash-cell" id="game-p2-pts">-</div>
-                <div class="splash-cell" id="game-p2-reb">-</div>
-                <div class="splash-cell" id="game-p2-ast">-</div>
-                <div class="splash-cell" id="game-p2-fgp">-</div>
-                <div class="splash-cell" id="game-p2-blk">-</div>
-                <div class="splash-cell" id="game-p2-stl">-</div>
-            </div>
-        </div>
+        <!-- Replaced with Perfect Grid Table -->
+        <table class="stats-table">
+            <tbody>
+                <tr>
+                    <td id="game-p1-pts">-</td>
+                    <td class="label-col">PTS</td>
+                    <td id="game-p2-pts">-</td>
+                </tr>
+                <tr>
+                    <td id="game-p1-reb">-</td>
+                    <td class="label-col">REB</td>
+                    <td id="game-p2-reb">-</td>
+                </tr>
+                <tr>
+                    <td id="game-p1-ast">-</td>
+                    <td class="label-col">AST</td>
+                    <td id="game-p2-ast">-</td>
+                </tr>
+                <tr>
+                    <td id="game-p1-fgp">-</td>
+                    <td class="label-col">FG%</td>
+                    <td id="game-p2-fgp">-</td>
+                </tr>
+                <tr>
+                    <td id="game-p1-blk">-</td>
+                    <td class="label-col">BLK</td>
+                    <td id="game-p2-blk">-</td>
+                </tr>
+                <tr>
+                    <td id="game-p1-stl">-</td>
+                    <td class="label-col">STL</td>
+                    <td id="game-p2-stl">-</td>
+                </tr>
+            </tbody>
+        </table>
         
         <button class="btn-action" style="display: block; width: 100%;" onclick="closeGameSplash()">CONTINUE</button>
     </div>
@@ -561,45 +557,56 @@
     <div class="splash-content" id="series-splash-step2" style="display: none;">
         <div class="splash-subtitle" style="margin-bottom: 15px; font-size: clamp(1rem, 3vw, 1.4rem); color: var(--text-main);">Series Averages</div>
 
-        <div class="splash-stats">
-            <div class="splash-col">
-                <div class="splash-header">
-                    <img id="splash-p1-recap-avatar" src="" class="recap-avatar">
-                    <span id="splash-p1-header" style="line-height: 1;">P1</span>
-                </div>
-                <div class="splash-cell" id="splash-p1-ppg">-</div>
-                <div class="splash-cell" id="splash-p1-apg">-</div>
-                <div class="splash-cell" id="splash-p1-rpg">-</div>
-                <div class="splash-cell" id="splash-p1-spg">-</div>
-                <div class="splash-cell" id="splash-p1-bpg">-</div>
-                <div class="splash-cell" id="splash-p1-fgp">-</div>
-            </div>
-            
-            <div class="splash-col splash-col-center">
-                <div class="splash-header" style="padding-bottom: 10px;">
-                    <span style="color:var(--text-muted); font-size: clamp(0.75rem, 2vw, 0.95rem); line-height: 1;">AVERAGES</span>
-                </div>
-                <div class="splash-cell-label">PPG</div>
-                <div class="splash-cell-label">APG</div>
-                <div class="splash-cell-label">RPG</div>
-                <div class="splash-cell-label">SPG</div>
-                <div class="splash-cell-label">BPG</div>
-                <div class="splash-cell-label">FG%</div>
-            </div>
-
-            <div class="splash-col">
-                <div class="splash-header">
-                    <img id="splash-p2-recap-avatar" src="" class="recap-avatar">
-                    <span id="splash-p2-header" style="line-height: 1;">P2</span>
-                </div>
-                <div class="splash-cell" id="splash-p2-ppg">-</div>
-                <div class="splash-cell" id="splash-p2-apg">-</div>
-                <div class="splash-cell" id="splash-p2-rpg">-</div>
-                <div class="splash-cell" id="splash-p2-spg">-</div>
-                <div class="splash-cell" id="splash-p2-bpg">-</div>
-                <div class="splash-cell" id="splash-p2-fgp">-</div>
-            </div>
-        </div>
+        <!-- Replaced with Perfect Grid Table -->
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>
+                        <img id="splash-p1-recap-avatar" src="" class="recap-avatar">
+                        <span id="splash-p1-header" style="line-height: 1;">P1</span>
+                    </th>
+                    <th style="padding-bottom: 12px;">
+                        <span style="color:var(--text-muted); font-size: clamp(0.75rem, 2vw, 0.95rem); line-height: 1;">AVERAGES</span>
+                    </th>
+                    <th>
+                        <img id="splash-p2-recap-avatar" src="" class="recap-avatar">
+                        <span id="splash-p2-header" style="line-height: 1;">P2</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="splash-p1-ppg">-</td>
+                    <td class="label-col">PPG</td>
+                    <td id="splash-p2-ppg">-</td>
+                </tr>
+                <tr>
+                    <td id="splash-p1-apg">-</td>
+                    <td class="label-col">APG</td>
+                    <td id="splash-p2-apg">-</td>
+                </tr>
+                <tr>
+                    <td id="splash-p1-rpg">-</td>
+                    <td class="label-col">RPG</td>
+                    <td id="splash-p2-rpg">-</td>
+                </tr>
+                <tr>
+                    <td id="splash-p1-spg">-</td>
+                    <td class="label-col">SPG</td>
+                    <td id="splash-p2-spg">-</td>
+                </tr>
+                <tr>
+                    <td id="splash-p1-bpg">-</td>
+                    <td class="label-col">BPG</td>
+                    <td id="splash-p2-bpg">-</td>
+                </tr>
+                <tr>
+                    <td id="splash-p1-fgp">-</td>
+                    <td class="label-col">FG%</td>
+                    <td id="splash-p2-fgp">-</td>
+                </tr>
+            </tbody>
+        </table>
 
         <button class="btn-action" style="display: block; width: 100%;" onclick="resetMatch(true)">START NEW SERIES</button>
     </div>
@@ -733,7 +740,6 @@
             document.getElementById('concede-btn').style.display = "inline-block";
         }
         
-        // Scroll smoothly back to top for tip-off
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1013,7 +1019,6 @@
 
         const statToRoll = rollSequence[currentStep];
         
-        // Ensure the rolling row scrolls smoothly into view
         const currentRowEl = document.getElementById(`row-${statToRoll}`);
         if (currentRowEl) {
             currentRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
