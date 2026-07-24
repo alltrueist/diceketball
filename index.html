@@ -38,7 +38,7 @@
 
         .app-container {
             width: 100%;
-            max-width: 800px; /* Increased max-width for better desktop scaling */
+            max-width: 800px; 
             background-color: var(--panel-bg);
             min-height: 100vh;
             display: flex;
@@ -732,6 +732,9 @@
             document.getElementById('roll-btn').disabled = false;
             document.getElementById('concede-btn').style.display = "inline-block";
         }
+        
+        // Scroll smoothly back to top for tip-off
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function rollD(sides) { return Math.floor(Math.random() * sides) + 1; }
@@ -1009,6 +1012,13 @@
         }
 
         const statToRoll = rollSequence[currentStep];
+        
+        // Ensure the rolling row scrolls smoothly into view
+        const currentRowEl = document.getElementById(`row-${statToRoll}`);
+        if (currentRowEl) {
+            currentRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         const p1Profile = document.getElementById('p1-profile').value;
         const p2Profile = document.getElementById('p2-profile').value;
 
