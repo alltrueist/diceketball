@@ -16,10 +16,10 @@
             --panel-bg: rgba(34, 34, 34, 0.95);
             --text-main: #FFFFFF;
             --text-muted: #888888;
-            --boost-color: #4ADE80; /* Bright Mint Green */
-            --reduce-color: #F87171; /* Bright Coral Red */
-            --highlight-bg: #333333; /* Slate Gray for winning cell */
-            --highlight-border: #FBBF24; /* Gold */
+            --boost-color: #4ADE80; 
+            --reduce-color: #F87171; 
+            --highlight-bg: #333333; 
+            --highlight-border: #FBBF24; 
         }
 
         body {
@@ -171,7 +171,6 @@
             transition: background-color 0.3s;
         }
 
-        /* Winner Highlighting */
         .winner-cell {
             background-color: var(--highlight-bg);
             border-left: 3px solid var(--highlight-border);
@@ -244,7 +243,6 @@
             font-weight: bold;
         }
 
-        /* Secondary Game Buttons */
         .btn-action {
             background-color: var(--highlight-border);
             color: #000;
@@ -266,7 +264,7 @@
             font-family: sans-serif;
         }
 
-        /* Splash Screen Overlay */
+        /* Splash Screen Overlays */
         .splash-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -291,6 +289,12 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
+        }
+
+        /* Unique styling for OT overlay */
+        #ot-splash-content {
+            border-color: var(--reduce-color);
+            box-shadow: 0 0 30px rgba(248, 113, 113, 0.3);
         }
 
         .splash-title {
@@ -425,15 +429,51 @@
     </div>
 </div>
 
-<!-- Splash Screen Modal -->
-<div class="splash-overlay" id="splash-overlay">
-    <div class="splash-content">
-        <h1 class="splash-title" id="splash-champ">🏆 PLAYER 1 🏆</h1>
-        <div class="splash-subtitle">Series Champion</div>
+<!-- Overtime Splash Screen -->
+<div class="splash-overlay" id="ot-splash-overlay">
+    <div class="splash-content" id="ot-splash-content">
+        <h1 class="splash-title" id="ot-title" style="color: var(--reduce-color); text-shadow: 0 0 10px rgba(248, 113, 113, 0.5);">OVERTIME</h1>
+        
+        <div style="display: flex; justify-content: space-around; width: 100%; margin: 20px 0; align-items: center;">
+            <div style="text-align: center;">
+                <img id="ot-p1-avatar" src="" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--text-main); object-fit: cover;">
+                <div style="font-size: 2.5rem; font-weight: bold; margin-top: 10px;" id="ot-p1-score">0</div>
+            </div>
+            <h2 style="margin: 0 15px; color: var(--text-muted);">VS</h2>
+            <div style="text-align: center;">
+                <img id="ot-p2-avatar" src="" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--text-main); object-fit: cover;">
+                <div style="font-size: 2.5rem; font-weight: bold; margin-top: 10px;" id="ot-p2-score">0</div>
+            </div>
+        </div>
+
+        <div class="splash-subtitle" id="ot-winner-text" style="color: var(--highlight-border); font-size: 1.2rem; font-weight: bold; margin-bottom: 0;">PLAYER 1 WINS IN OT!</div>
+        <button class="btn-action" style="display: block; width: 100%; margin-top: 20px;" onclick="closeOvertimeSplash()">CONTINUE</button>
+    </div>
+</div>
+
+<!-- Sequenced Series End Splash Screen -->
+<div class="splash-overlay" id="series-splash-overlay">
+    <!-- Step 1: Champion Spotlight -->
+    <div class="splash-content" id="series-splash-step1">
+        <h1 class="splash-title" id="splash-champ">🏆 PLAYER 1 WINS! 🏆</h1>
+        <img id="splash-champ-avatar" src="" alt="Champion" style="width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--highlight-border); object-fit: cover; margin: 20px 0; box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);">
+        
+        <div style="color: var(--text-muted); font-family: sans-serif; font-size: 0.9rem; text-transform: uppercase;">Final Series Score</div>
+        <div class="splash-subtitle" id="splash-series-score" style="font-size: 2rem; font-weight: bold; color: var(--text-main); margin-bottom: 25px;">4 - 3</div>
+        
+        <button class="btn-action" style="display: block; width: 100%;" onclick="showRecapScreen()">RECAP</button>
+    </div>
+
+    <!-- Step 2: Stats Recap -->
+    <div class="splash-content" id="series-splash-step2" style="display: none;">
+        <div class="splash-subtitle" style="margin-bottom: 15px; font-size: 1.2rem; color: var(--text-main);">Series Averages</div>
 
         <div class="splash-stats">
             <div class="splash-col">
-                <div class="splash-header" id="splash-p1-header">P1</div>
+                <div class="splash-header" style="display:flex; flex-direction:column; align-items:center; padding: 10px 0;">
+                    <img id="splash-p1-recap-avatar" src="" style="width:45px; height:45px; border-radius:50%; border: 2px solid var(--highlight-border); margin-bottom:5px; object-fit:cover;">
+                    <span id="splash-p1-header" style="font-size: 1rem;">P1</span>
+                </div>
                 <div class="splash-cell" id="splash-p1-ppg">-</div>
                 <div class="splash-cell" id="splash-p1-apg">-</div>
                 <div class="splash-cell" id="splash-p1-rpg">-</div>
@@ -443,7 +483,7 @@
             </div>
             
             <div class="splash-col splash-col-center">
-                <div class="splash-header" style="color:var(--text-muted); font-size: 0.9rem; padding: 13px 0;">AVERAGES</div>
+                <div class="splash-header" style="color:var(--text-muted); font-size: 0.9rem; padding: 34px 0 13px 0;">AVERAGES</div>
                 <div class="splash-cell-label">PPG</div>
                 <div class="splash-cell-label">APG</div>
                 <div class="splash-cell-label">RPG</div>
@@ -453,7 +493,10 @@
             </div>
 
             <div class="splash-col">
-                <div class="splash-header" id="splash-p2-header">P2</div>
+                <div class="splash-header" style="display:flex; flex-direction:column; align-items:center; padding: 10px 0;">
+                    <img id="splash-p2-recap-avatar" src="" style="width:45px; height:45px; border-radius:50%; border: 2px solid var(--highlight-border); margin-bottom:5px; object-fit:cover;">
+                    <span id="splash-p2-header" style="font-size: 1rem;">P2</span>
+                </div>
                 <div class="splash-cell" id="splash-p2-ppg">-</div>
                 <div class="splash-cell" id="splash-p2-apg">-</div>
                 <div class="splash-cell" id="splash-p2-rpg">-</div>
@@ -500,15 +543,16 @@
     const rollSequence = ['fg2', 'fg3', 'ft', 'oreb', 'dreb', 'ast', 'to', 'stl', 'blk', 'pf'];
     let currentStep = 0;
     
-    // State Storage
     let p1Data = {}, p2Data = {};
     let p1SeriesWins = 0;
     let p2SeriesWins = 0;
 
-    // Series Stat Accumulators
     let gamesPlayed = 0;
     let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
     let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
+    
+    // Store OT winner context for after splash screen closes
+    let pendingGameWinner = '';
 
     function initBoard() {
         const board = document.getElementById('box-score');
@@ -565,16 +609,14 @@
             document.getElementById('p1-score').innerText = p1SeriesWins;
             document.getElementById('p2-score').innerText = p2SeriesWins;
             
-            // Reset banner names
             document.getElementById('p1-name').innerText = 'P1';
             document.getElementById('p2-name').innerText = 'P2';
 
-            // Reset accumulators
             gamesPlayed = 0;
             p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
             p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
 
-            document.getElementById('splash-overlay').style.display = 'none';
+            document.getElementById('series-splash-overlay').style.display = 'none';
 
             document.getElementById('p1-profile').value = 'none';
             document.getElementById('p2-profile').value = 'none';
@@ -680,13 +722,20 @@
         }
     }
 
-    function triggerSeriesEnd(champName) {
+    function triggerSeriesEnd(champName, champPrefix) {
         const p1Profile = document.getElementById('p1-profile').value;
         const p2Profile = document.getElementById('p2-profile').value;
         
-        document.getElementById('splash-champ').innerText = `🏆 ${champName} 🏆`;
+        // Setup Screen 1 (Champion Spotlight)
+        document.getElementById('splash-champ').innerText = `🏆 ${champName} WINS! 🏆`;
+        document.getElementById('splash-champ-avatar').src = champPrefix === 'p1' ? profiles[p1Profile].img : profiles[p2Profile].img;
+        document.getElementById('splash-series-score').innerText = `${p1SeriesWins} - ${p2SeriesWins}`;
+
+        // Setup Screen 2 (Stats Recap)
         document.getElementById('splash-p1-header').innerText = profiles[p1Profile].abbr;
         document.getElementById('splash-p2-header').innerText = profiles[p2Profile].abbr;
+        document.getElementById('splash-p1-recap-avatar').src = profiles[p1Profile].img;
+        document.getElementById('splash-p2-recap-avatar').src = profiles[p2Profile].img;
 
         // Calculate P1 Averages
         document.getElementById('splash-p1-ppg').innerText = (p1SeriesStats.pts / gamesPlayed).toFixed(1);
@@ -706,20 +755,81 @@
         let p2Fgp = p2SeriesStats.fg_attempts > 0 ? Math.round((p2SeriesStats.fg_makes / p2SeriesStats.fg_attempts) * 100) : 0;
         document.getElementById('splash-p2-fgp').innerText = `${p2Fgp}%`;
 
-        document.getElementById('splash-overlay').style.display = 'flex';
+        // Reset display order and show overlay
+        document.getElementById('series-splash-step1').style.display = 'flex';
+        document.getElementById('series-splash-step2').style.display = 'none';
+        document.getElementById('series-splash-overlay').style.display = 'flex';
     }
 
-    function evaluateGameWinner() {
-        let p1Wins = 0, p2Wins = 0;
-        
-        statsConfig.forEach(s => {
-            if (document.getElementById(`p1-${s.id}`).classList.contains('winner-cell')) p1Wins++;
-            if (document.getElementById(`p2-${s.id}`).classList.contains('winner-cell')) p2Wins++;
-        });
+    function showRecapScreen() {
+        document.getElementById('series-splash-step1').style.display = 'none';
+        document.getElementById('series-splash-step2').style.display = 'flex';
+    }
 
+    function handleOvertime() {
+        let otPeriod = 0;
+        let otResolved = false;
+        let p1TotalOTRoll = 0;
+        let p2TotalOTRoll = 0;
+
+        // Loop accumulates points for each tied OT period until a winner is decided
+        while(!otResolved) {
+            otPeriod++;
+            let p1Roll = rollD(6);
+            let p2Roll = rollD(6);
+
+            // 4OT Failsafe Circuit Breaker
+            if (otPeriod >= 4 && p1Roll === p2Roll) {
+                while(p2Roll === p1Roll) {
+                    p2Roll = rollD(6);
+                }
+            }
+
+            p1TotalOTRoll += p1Roll;
+            p2TotalOTRoll += p2Roll;
+
+            if (p1Roll !== p2Roll) {
+                otResolved = true;
+            }
+        }
+
+        // Add cumulative OT points to the total PTS data
+        p1Data.pts += p1TotalOTRoll;
+        p2Data.pts += p2TotalOTRoll;
+        
+        // Re-render the points row on the box score and evaluate the new winner
+        renderCell('p1', 'pts', p1Data.pts, false, p1Data.pts_isReduce);
+        renderCell('p2', 'pts', p2Data.pts, false, p2Data.pts_isReduce);
+        evaluateWinner('pts', p1Data.pts, p2Data.pts);
+
+        pendingGameWinner = p1TotalOTRoll > p2TotalOTRoll ? 'p1' : 'p2';
+        
+        // Setup Overtime Splash Screen
+        let otTitleStr = otPeriod === 1 ? 'OVERTIME' : (otPeriod === 2 ? 'DOUBLE OVERTIME' : (otPeriod === 3 ? 'TRIPLE OVERTIME' : 'QUADRUPLE OVERTIME'));
+        document.getElementById('ot-title').innerText = otTitleStr;
+        
+        const p1Profile = document.getElementById('p1-profile').value;
+        const p2Profile = document.getElementById('p2-profile').value;
+        document.getElementById('ot-p1-avatar').src = profiles[p1Profile].img;
+        document.getElementById('ot-p2-avatar').src = profiles[p2Profile].img;
+        
+        document.getElementById('ot-p1-score').innerText = p1TotalOTRoll;
+        document.getElementById('ot-p2-score').innerText = p2TotalOTRoll;
+        
+        document.getElementById('ot-winner-text').innerText = pendingGameWinner === 'p1' ? 'PLAYER 1 WINS IN OT!' : 'PLAYER 2 WINS IN OT!';
+
+        document.getElementById('ot-splash-overlay').style.display = 'flex';
+    }
+
+    function closeOvertimeSplash() {
+        document.getElementById('ot-splash-overlay').style.display = 'none';
+        finalizeGame(pendingGameWinner);
+    }
+
+    function finalizeGame(winnerPrefix) {
         gamesPlayed++;
 
-        // Accumulate Stats for Averages
+        // Accumulate Stats for Averages (Includes any new OT points)
         p1SeriesStats.pts += p1Data.pts;
         p1SeriesStats.ast += p1Data.ast_makes;
         p1SeriesStats.treb += p1Data.treb;
@@ -736,23 +846,37 @@
         p2SeriesStats.fg_makes += (p2Data.fg2_makes + p2Data.fg3_makes);
         p2SeriesStats.fg_attempts += (p2Data.fg2_attempts + p2Data.fg3_attempts);
 
-        if (p1Wins > p2Wins) {
+        if (winnerPrefix === 'p1') {
             p1SeriesWins++;
             document.getElementById('status-text').innerText = `PLAYER 1 WINS GAME ${gamesPlayed}!`;
-        } else if (p2Wins > p1Wins) {
+        } else {
             p2SeriesWins++;
             document.getElementById('status-text').innerText = `PLAYER 2 WINS GAME ${gamesPlayed}!`;
-        } else {
-            document.getElementById('status-text').innerText = `GAME ${gamesPlayed} IS A DRAW!`;
         }
 
         document.getElementById('p1-score').innerText = p1SeriesWins;
         document.getElementById('p2-score').innerText = p2SeriesWins;
 
         if (p1SeriesWins >= 4 || p2SeriesWins >= 4) {
-            triggerSeriesEnd(p1SeriesWins >= 4 ? "PLAYER 1" : "PLAYER 2");
+            triggerSeriesEnd(winnerPrefix === 'p1' ? "PLAYER 1" : "PLAYER 2", winnerPrefix);
         } else {
             document.getElementById('next-game-btn').style.display = "inline-block";
+        }
+    }
+
+    function evaluateGameWinner() {
+        let p1Wins = 0, p2Wins = 0;
+        
+        statsConfig.forEach(s => {
+            if (document.getElementById(`p1-${s.id}`).classList.contains('winner-cell')) p1Wins++;
+            if (document.getElementById(`p2-${s.id}`).classList.contains('winner-cell')) p2Wins++;
+        });
+
+        if (p1Wins === p2Wins) {
+            handleOvertime();
+        } else {
+            let directWinner = p1Wins > p2Wins ? 'p1' : 'p2';
+            finalizeGame(directWinner);
         }
     }
 
@@ -841,7 +965,6 @@
     initBoard();
 </script>
 
-<!-- Register PWA Service Worker -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
