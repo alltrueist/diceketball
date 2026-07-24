@@ -38,13 +38,13 @@
 
         .app-container {
             width: 100%;
-            max-width: 600px;
+            max-width: 800px; /* Increased max-width for better desktop scaling */
             background-color: var(--panel-bg);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-            padding-bottom: 120px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.9);
+            padding-bottom: clamp(100px, 15vw, 140px);
         }
 
         header {
@@ -53,7 +53,7 @@
         }
 
         .logo {
-            max-width: 250px;
+            max-width: clamp(200px, 50vw, 300px);
             height: auto;
         }
 
@@ -62,8 +62,8 @@
             text-align: center;
             background-color: #111;
             color: var(--highlight-border);
-            padding: 8px;
-            font-size: 1.2rem;
+            padding: clamp(6px, 1.5vw, 10px);
+            font-size: clamp(1rem, 3vw, 1.4rem);
             letter-spacing: 2px;
             border-top: 1px solid #333;
             border-bottom: 2px solid #000;
@@ -72,7 +72,7 @@
 
         .series-name {
             color: var(--text-main);
-            font-size: 1.1rem;
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
         }
 
         /* Matchup Section */
@@ -93,8 +93,8 @@
         }
 
         .avatar {
-            width: 80px;
-            height: 80px;
+            width: clamp(60px, 16vw, 110px);
+            height: clamp(60px, 16vw, 110px);
             border-radius: 50%;
             background-color: #444;
             margin-bottom: 10px;
@@ -111,7 +111,7 @@
             border: 1px solid #555;
             border-radius: 4px;
             font-family: inherit;
-            font-size: 0.9rem;
+            font-size: clamp(0.8rem, 2vw, 1rem);
             margin-bottom: 5px;
         }
         
@@ -122,19 +122,19 @@
 
         .traits {
             font-family: sans-serif;
-            font-size: 0.75rem;
+            font-size: clamp(0.65rem, 1.8vw, 0.85rem);
             min-height: 40px;
             color: var(--text-muted);
         }
 
         .vs-badge {
-            width: 40px;
+            width: clamp(30px, 8vw, 50px);
             height: auto;
         }
 
         /* Box Score */
         .box-score {
-            padding: 10px;
+            padding: clamp(10px, 2vw, 20px);
             display: flex;
             flex-direction: column;
             gap: 4px;
@@ -154,7 +154,7 @@
             flex: 1;
             text-align: center;
             font-family: sans-serif;
-            font-size: 0.85rem;
+            font-size: clamp(0.75rem, 2vw, 0.95rem);
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -163,10 +163,10 @@
         }
 
         .stat-cell {
-            width: 80px;
+            width: clamp(60px, 15vw, 100px);
             text-align: center;
             padding: 10px 5px;
-            font-size: 1.2rem;
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
             position: relative;
             transition: background-color 0.3s;
         }
@@ -203,9 +203,9 @@
             position: fixed;
             bottom: 0;
             width: 100%;
-            max-width: 600px;
-            background: linear-gradient(transparent, rgba(17,17,17,0.95) 30%);
-            padding: 20px 0 10px 0;
+            max-width: 800px;
+            background: linear-gradient(transparent, rgba(17,17,17,0.95) 30%, rgba(17,17,17,1) 100%);
+            padding: 20px 0 15px 0;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -230,7 +230,7 @@
         }
 
         .roll-btn img {
-            width: 100px;
+            width: clamp(90px, 20vw, 130px);
             height: auto;
             filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8));
         }
@@ -239,6 +239,7 @@
             text-align: center;
             font-family: sans-serif;
             margin-bottom: 10px;
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
             color: var(--highlight-border);
             font-weight: bold;
         }
@@ -247,10 +248,10 @@
             background-color: var(--highlight-border);
             color: #000;
             border: none;
-            padding: 12px 24px;
+            padding: clamp(10px, 3vw, 14px) clamp(20px, 5vw, 30px);
             border-radius: 4px;
             font-family: 'Impact', sans-serif;
-            font-size: 1.1rem;
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
             cursor: pointer;
             margin: 5px;
             display: none;
@@ -260,7 +261,7 @@
             background-color: #555;
             color: #fff;
             padding: 8px 16px;
-            font-size: 0.9rem;
+            font-size: clamp(0.8rem, 2vw, 1rem);
             font-family: sans-serif;
         }
 
@@ -282,8 +283,8 @@
             border: 3px solid var(--highlight-border);
             border-radius: 12px;
             width: 90%;
-            max-width: 500px;
-            padding: 20px;
+            max-width: 600px;
+            padding: clamp(15px, 4vw, 25px);
             box-shadow: 0 0 30px rgba(251, 191, 36, 0.3);
             display: flex;
             flex-direction: column;
@@ -291,7 +292,6 @@
             text-align: center;
         }
 
-        /* Unique styling for OT overlay */
         #ot-splash-content {
             border-color: var(--reduce-color);
             box-shadow: 0 0 30px rgba(248, 113, 113, 0.3);
@@ -299,7 +299,7 @@
 
         .splash-title {
             color: var(--boost-color);
-            font-size: 2.2rem;
+            font-size: clamp(1.8rem, 6vw, 2.8rem);
             margin-top: 0;
             margin-bottom: 5px;
             text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
@@ -309,7 +309,7 @@
         .splash-subtitle {
             color: var(--text-muted);
             font-family: sans-serif;
-            font-size: 1rem;
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
             margin-bottom: 20px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -319,7 +319,7 @@
             display: flex;
             width: 100%;
             justify-content: space-between;
-            margin-bottom: 25px;
+            margin-bottom: clamp(15px, 4vw, 25px);
             background: #1a1a1a;
             border-radius: 8px;
             border: 1px solid #333;
@@ -339,23 +339,30 @@
             border-right: 1px solid #333;
         }
 
+        /* Fully Responsive, Uniform Splash Header Fix */
         .splash-header {
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
             color: var(--highlight-border);
             padding: 10px 0;
             background: #000;
             border-bottom: 1px solid #333;
+            height: clamp(80px, 18vw, 110px); 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; 
+            box-sizing: border-box;
         }
 
         .splash-cell {
-            padding: 8px 0;
-            font-size: 1.3rem;
+            padding: clamp(6px, 1.5vw, 10px) 0;
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
             border-bottom: 1px solid #222;
         }
 
         .splash-cell-label {
-            padding: 8px 0;
-            font-size: 0.9rem;
+            padding: clamp(6px, 1.5vw, 10px) 0;
+            font-size: clamp(0.75rem, 2vw, 0.95rem);
             font-family: sans-serif;
             font-weight: bold;
             color: var(--text-muted);
@@ -369,6 +376,49 @@
         .splash-cell:last-child, .splash-cell-label:last-child {
             border-bottom: none;
         }
+
+        /* Scalable Avatar Classes for Splash Screens */
+        .ot-avatar {
+            width: clamp(65px, 16vw, 100px);
+            height: clamp(65px, 16vw, 100px);
+            border-radius: 50%;
+            border: 2px solid var(--text-main);
+            object-fit: cover;
+        }
+        
+        .ot-score-text {
+            font-size: clamp(2rem, 6vw, 3rem);
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .game-splash-avatar {
+            width: clamp(60px, 15vw, 90px);
+            height: clamp(60px, 15vw, 90px);
+            border-radius: 50%;
+            border: 3px solid var(--text-main);
+            object-fit: cover;
+        }
+
+        .champ-avatar {
+            width: clamp(120px, 30vw, 200px);
+            height: clamp(120px, 30vw, 200px);
+            border-radius: 50%;
+            border: 4px solid var(--highlight-border);
+            object-fit: cover;
+            margin: clamp(15px, 4vw, 25px) 0;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+        }
+
+        .recap-avatar {
+            width: clamp(35px, 8vw, 55px);
+            height: clamp(35px, 8vw, 55px);
+            border-radius: 50%;
+            border: 2px solid var(--highlight-border);
+            margin-bottom: 5px;
+            object-fit: cover;
+        }
+
     </style>
 </head>
 <body>
@@ -436,18 +486,61 @@
         
         <div style="display: flex; justify-content: space-around; width: 100%; margin: 20px 0; align-items: center;">
             <div style="text-align: center;">
-                <img id="ot-p1-avatar" src="" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--text-main); object-fit: cover;">
-                <div style="font-size: 2.5rem; font-weight: bold; margin-top: 10px;" id="ot-p1-score">0</div>
+                <img id="ot-p1-avatar" src="" class="ot-avatar">
+                <div class="ot-score-text" id="ot-p1-score">0</div>
             </div>
-            <h2 style="margin: 0 15px; color: var(--text-muted);">VS</h2>
+            <h2 style="margin: 0 15px; color: var(--text-muted); font-size: clamp(1.2rem, 3.5vw, 2rem);">VS</h2>
             <div style="text-align: center;">
-                <img id="ot-p2-avatar" src="" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--text-main); object-fit: cover;">
-                <div style="font-size: 2.5rem; font-weight: bold; margin-top: 10px;" id="ot-p2-score">0</div>
+                <img id="ot-p2-avatar" src="" class="ot-avatar">
+                <div class="ot-score-text" id="ot-p2-score">0</div>
             </div>
         </div>
 
-        <div class="splash-subtitle" id="ot-winner-text" style="color: var(--highlight-border); font-size: 1.2rem; font-weight: bold; margin-bottom: 0;">PLAYER 1 WINS IN OT!</div>
+        <div class="splash-subtitle" id="ot-winner-text" style="color: var(--highlight-border); font-size: clamp(1rem, 3vw, 1.4rem); font-weight: bold; margin-bottom: 0;">PLAYER 1 WINS IN OT!</div>
         <button class="btn-action" style="display: block; width: 100%; margin-top: 20px;" onclick="closeOvertimeSplash()">CONTINUE</button>
+    </div>
+</div>
+
+<!-- Game Winner Splash Screen -->
+<div class="splash-overlay" id="game-splash-overlay">
+    <div class="splash-content">
+        <h1 class="splash-title" id="game-splash-title">GAME 1 FINAL</h1>
+        <h2 class="splash-subtitle" id="game-splash-winner-text" style="color: var(--boost-color); font-size: clamp(1.2rem, 3.5vw, 1.8rem); margin-bottom: 10px;">PLAYER 1 WINS!</h2>
+
+        <div style="display: flex; justify-content: space-around; width: 100%; margin: 15px 0 25px 0; align-items: center;">
+            <img id="game-p1-avatar" src="" class="game-splash-avatar">
+            <span style="color: var(--text-muted); font-weight: bold; font-size: clamp(1rem, 3vw, 1.5rem);">VS</span>
+            <img id="game-p2-avatar" src="" class="game-splash-avatar">
+        </div>
+
+        <div class="splash-stats" style="margin-bottom: 20px;">
+            <div class="splash-col">
+                <div class="splash-cell" id="game-p1-pts">-</div>
+                <div class="splash-cell" id="game-p1-reb">-</div>
+                <div class="splash-cell" id="game-p1-ast">-</div>
+                <div class="splash-cell" id="game-p1-fgp">-</div>
+                <div class="splash-cell" id="game-p1-blk">-</div>
+                <div class="splash-cell" id="game-p1-stl">-</div>
+            </div>
+            <div class="splash-col splash-col-center">
+                <div class="splash-cell-label">PTS</div>
+                <div class="splash-cell-label">REB</div>
+                <div class="splash-cell-label">AST</div>
+                <div class="splash-cell-label">FG%</div>
+                <div class="splash-cell-label">BLK</div>
+                <div class="splash-cell-label">STL</div>
+            </div>
+            <div class="splash-col">
+                <div class="splash-cell" id="game-p2-pts">-</div>
+                <div class="splash-cell" id="game-p2-reb">-</div>
+                <div class="splash-cell" id="game-p2-ast">-</div>
+                <div class="splash-cell" id="game-p2-fgp">-</div>
+                <div class="splash-cell" id="game-p2-blk">-</div>
+                <div class="splash-cell" id="game-p2-stl">-</div>
+            </div>
+        </div>
+        
+        <button class="btn-action" style="display: block; width: 100%;" onclick="closeGameSplash()">CONTINUE</button>
     </div>
 </div>
 
@@ -456,23 +549,23 @@
     <!-- Step 1: Champion Spotlight -->
     <div class="splash-content" id="series-splash-step1">
         <h1 class="splash-title" id="splash-champ">🏆 PLAYER 1 WINS! 🏆</h1>
-        <img id="splash-champ-avatar" src="" alt="Champion" style="width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--highlight-border); object-fit: cover; margin: 20px 0; box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);">
+        <img id="splash-champ-avatar" src="" alt="Champion" class="champ-avatar">
         
-        <div style="color: var(--text-muted); font-family: sans-serif; font-size: 0.9rem; text-transform: uppercase;">Final Series Score</div>
-        <div class="splash-subtitle" id="splash-series-score" style="font-size: 2rem; font-weight: bold; color: var(--text-main); margin-bottom: 25px;">4 - 3</div>
+        <div style="color: var(--text-muted); font-family: sans-serif; font-size: clamp(0.8rem, 2vw, 1rem); text-transform: uppercase;">Final Series Score</div>
+        <div class="splash-subtitle" id="splash-series-score" style="font-size: clamp(2rem, 6vw, 3rem); font-weight: bold; color: var(--text-main); margin-bottom: 25px;">4 - 3</div>
         
         <button class="btn-action" style="display: block; width: 100%;" onclick="showRecapScreen()">RECAP</button>
     </div>
 
     <!-- Step 2: Stats Recap -->
     <div class="splash-content" id="series-splash-step2" style="display: none;">
-        <div class="splash-subtitle" style="margin-bottom: 15px; font-size: 1.2rem; color: var(--text-main);">Series Averages</div>
+        <div class="splash-subtitle" style="margin-bottom: 15px; font-size: clamp(1rem, 3vw, 1.4rem); color: var(--text-main);">Series Averages</div>
 
         <div class="splash-stats">
             <div class="splash-col">
-                <div class="splash-header" style="display:flex; flex-direction:column; align-items:center; padding: 10px 0;">
-                    <img id="splash-p1-recap-avatar" src="" style="width:45px; height:45px; border-radius:50%; border: 2px solid var(--highlight-border); margin-bottom:5px; object-fit:cover;">
-                    <span id="splash-p1-header" style="font-size: 1rem;">P1</span>
+                <div class="splash-header">
+                    <img id="splash-p1-recap-avatar" src="" class="recap-avatar">
+                    <span id="splash-p1-header" style="line-height: 1;">P1</span>
                 </div>
                 <div class="splash-cell" id="splash-p1-ppg">-</div>
                 <div class="splash-cell" id="splash-p1-apg">-</div>
@@ -483,7 +576,9 @@
             </div>
             
             <div class="splash-col splash-col-center">
-                <div class="splash-header" style="color:var(--text-muted); font-size: 0.9rem; padding: 34px 0 13px 0;">AVERAGES</div>
+                <div class="splash-header" style="padding-bottom: 10px;">
+                    <span style="color:var(--text-muted); font-size: clamp(0.75rem, 2vw, 0.95rem); line-height: 1;">AVERAGES</span>
+                </div>
                 <div class="splash-cell-label">PPG</div>
                 <div class="splash-cell-label">APG</div>
                 <div class="splash-cell-label">RPG</div>
@@ -493,9 +588,9 @@
             </div>
 
             <div class="splash-col">
-                <div class="splash-header" style="display:flex; flex-direction:column; align-items:center; padding: 10px 0;">
-                    <img id="splash-p2-recap-avatar" src="" style="width:45px; height:45px; border-radius:50%; border: 2px solid var(--highlight-border); margin-bottom:5px; object-fit:cover;">
-                    <span id="splash-p2-header" style="font-size: 1rem;">P2</span>
+                <div class="splash-header">
+                    <img id="splash-p2-recap-avatar" src="" class="recap-avatar">
+                    <span id="splash-p2-header" style="line-height: 1;">P2</span>
                 </div>
                 <div class="splash-cell" id="splash-p2-ppg">-</div>
                 <div class="splash-cell" id="splash-p2-apg">-</div>
@@ -551,7 +646,6 @@
     let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
     let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
     
-    // Store OT winner context for after splash screen closes
     let pendingGameWinner = '';
 
     function initBoard() {
@@ -559,9 +653,9 @@
         board.innerHTML = '';
         statsConfig.forEach(stat => {
             board.innerHTML += `
-                <div class="stat-row" id="row-${stat.id}" style="${stat.large ? 'margin: 10px 0; border: 2px solid #555;' : ''}">
+                <div class="stat-row" id="row-${stat.id}" style="${stat.large ? 'margin: clamp(10px, 2vw, 15px) 0; border: 2px solid #555;' : ''}">
                     <div class="stat-cell" id="p1-${stat.id}">-</div>
-                    <div class="stat-name" style="${stat.large ? 'color:#fff; font-size:1.1rem;' : ''}">${stat.name}</div>
+                    <div class="stat-name" style="${stat.large ? 'color:#fff; font-size: clamp(1rem, 2.5vw, 1.2rem);' : ''}">${stat.name}</div>
                     <div class="stat-cell" id="p2-${stat.id}">-</div>
                 </div>
             `;
@@ -726,18 +820,15 @@
         const p1Profile = document.getElementById('p1-profile').value;
         const p2Profile = document.getElementById('p2-profile').value;
         
-        // Setup Screen 1 (Champion Spotlight)
         document.getElementById('splash-champ').innerText = `🏆 ${champName} WINS! 🏆`;
         document.getElementById('splash-champ-avatar').src = champPrefix === 'p1' ? profiles[p1Profile].img : profiles[p2Profile].img;
         document.getElementById('splash-series-score').innerText = `${p1SeriesWins} - ${p2SeriesWins}`;
 
-        // Setup Screen 2 (Stats Recap)
         document.getElementById('splash-p1-header').innerText = profiles[p1Profile].abbr;
         document.getElementById('splash-p2-header').innerText = profiles[p2Profile].abbr;
         document.getElementById('splash-p1-recap-avatar').src = profiles[p1Profile].img;
         document.getElementById('splash-p2-recap-avatar').src = profiles[p2Profile].img;
 
-        // Calculate P1 Averages
         document.getElementById('splash-p1-ppg').innerText = (p1SeriesStats.pts / gamesPlayed).toFixed(1);
         document.getElementById('splash-p1-apg').innerText = (p1SeriesStats.ast / gamesPlayed).toFixed(1);
         document.getElementById('splash-p1-rpg').innerText = (p1SeriesStats.treb / gamesPlayed).toFixed(1);
@@ -746,7 +837,6 @@
         let p1Fgp = p1SeriesStats.fg_attempts > 0 ? Math.round((p1SeriesStats.fg_makes / p1SeriesStats.fg_attempts) * 100) : 0;
         document.getElementById('splash-p1-fgp').innerText = `${p1Fgp}%`;
 
-        // Calculate P2 Averages
         document.getElementById('splash-p2-ppg').innerText = (p2SeriesStats.pts / gamesPlayed).toFixed(1);
         document.getElementById('splash-p2-apg').innerText = (p2SeriesStats.ast / gamesPlayed).toFixed(1);
         document.getElementById('splash-p2-rpg').innerText = (p2SeriesStats.treb / gamesPlayed).toFixed(1);
@@ -755,7 +845,6 @@
         let p2Fgp = p2SeriesStats.fg_attempts > 0 ? Math.round((p2SeriesStats.fg_makes / p2SeriesStats.fg_attempts) * 100) : 0;
         document.getElementById('splash-p2-fgp').innerText = `${p2Fgp}%`;
 
-        // Reset display order and show overlay
         document.getElementById('series-splash-step1').style.display = 'flex';
         document.getElementById('series-splash-step2').style.display = 'none';
         document.getElementById('series-splash-overlay').style.display = 'flex';
@@ -772,13 +861,11 @@
         let p1TotalOTRoll = 0;
         let p2TotalOTRoll = 0;
 
-        // Loop accumulates points for each tied OT period until a winner is decided
         while(!otResolved) {
             otPeriod++;
             let p1Roll = rollD(6);
             let p2Roll = rollD(6);
 
-            // 4OT Failsafe Circuit Breaker
             if (otPeriod >= 4 && p1Roll === p2Roll) {
                 while(p2Roll === p1Roll) {
                     p2Roll = rollD(6);
@@ -793,18 +880,15 @@
             }
         }
 
-        // Add cumulative OT points to the total PTS data
         p1Data.pts += p1TotalOTRoll;
         p2Data.pts += p2TotalOTRoll;
         
-        // Re-render the points row on the box score and evaluate the new winner
         renderCell('p1', 'pts', p1Data.pts, false, p1Data.pts_isReduce);
         renderCell('p2', 'pts', p2Data.pts, false, p2Data.pts_isReduce);
         evaluateWinner('pts', p1Data.pts, p2Data.pts);
 
         pendingGameWinner = p1TotalOTRoll > p2TotalOTRoll ? 'p1' : 'p2';
         
-        // Setup Overtime Splash Screen
         let otTitleStr = otPeriod === 1 ? 'OVERTIME' : (otPeriod === 2 ? 'DOUBLE OVERTIME' : (otPeriod === 3 ? 'TRIPLE OVERTIME' : 'QUADRUPLE OVERTIME'));
         document.getElementById('ot-title').innerText = otTitleStr;
         
@@ -829,7 +913,6 @@
     function finalizeGame(winnerPrefix) {
         gamesPlayed++;
 
-        // Accumulate Stats for Averages (Includes any new OT points)
         p1SeriesStats.pts += p1Data.pts;
         p1SeriesStats.ast += p1Data.ast_makes;
         p1SeriesStats.treb += p1Data.treb;
@@ -848,17 +931,53 @@
 
         if (winnerPrefix === 'p1') {
             p1SeriesWins++;
-            document.getElementById('status-text').innerText = `PLAYER 1 WINS GAME ${gamesPlayed}!`;
         } else {
             p2SeriesWins++;
-            document.getElementById('status-text').innerText = `PLAYER 2 WINS GAME ${gamesPlayed}!`;
         }
+
+        document.getElementById('game-splash-title').innerText = `GAME ${gamesPlayed} FINAL`;
+        
+        const p1Profile = document.getElementById('p1-profile').value;
+        const p2Profile = document.getElementById('p2-profile').value;
+        
+        document.getElementById('game-splash-winner-text').innerText = winnerPrefix === 'p1' ? `${profiles[p1Profile].abbr} WINS!` : `${profiles[p2Profile].abbr} WINS!`;
+        
+        document.getElementById('game-p1-avatar').src = profiles[p1Profile].img;
+        document.getElementById('game-p2-avatar').src = profiles[p2Profile].img;
+
+        document.getElementById('game-p1-avatar').style.borderColor = winnerPrefix === 'p1' ? 'var(--highlight-border)' : 'var(--text-main)';
+        document.getElementById('game-p2-avatar').style.borderColor = winnerPrefix === 'p2' ? 'var(--highlight-border)' : 'var(--text-main)';
+
+        let p1Fgp = (p1Data.fg2_attempts + p1Data.fg3_attempts) > 0 ? Math.round(((p1Data.fg2_makes + p1Data.fg3_makes) / (p1Data.fg2_attempts + p1Data.fg3_attempts)) * 100) : 0;
+        let p2Fgp = (p2Data.fg2_attempts + p2Data.fg3_attempts) > 0 ? Math.round(((p2Data.fg2_makes + p2Data.fg3_makes) / (p2Data.fg2_attempts + p2Data.fg3_attempts)) * 100) : 0;
+
+        document.getElementById('game-p1-pts').innerText = p1Data.pts;
+        document.getElementById('game-p1-reb').innerText = p1Data.treb;
+        document.getElementById('game-p1-ast').innerText = p1Data.ast_makes;
+        document.getElementById('game-p1-fgp').innerText = `${p1Fgp}%`;
+        document.getElementById('game-p1-blk').innerText = p1Data.blk_makes;
+        document.getElementById('game-p1-stl').innerText = p1Data.stl_makes;
+
+        document.getElementById('game-p2-pts').innerText = p2Data.pts;
+        document.getElementById('game-p2-reb').innerText = p2Data.treb;
+        document.getElementById('game-p2-ast').innerText = p2Data.ast_makes;
+        document.getElementById('game-p2-fgp').innerText = `${p2Fgp}%`;
+        document.getElementById('game-p2-blk').innerText = p2Data.blk_makes;
+        document.getElementById('game-p2-stl').innerText = p2Data.stl_makes;
+
+        document.getElementById('game-splash-overlay').style.display = 'flex';
+    }
+
+    function closeGameSplash() {
+        document.getElementById('game-splash-overlay').style.display = 'none';
 
         document.getElementById('p1-score').innerText = p1SeriesWins;
         document.getElementById('p2-score').innerText = p2SeriesWins;
+        document.getElementById('status-text').innerText = `GAME ${gamesPlayed} COMPLETE!`;
 
         if (p1SeriesWins >= 4 || p2SeriesWins >= 4) {
-            triggerSeriesEnd(winnerPrefix === 'p1' ? "PLAYER 1" : "PLAYER 2", winnerPrefix);
+            let champPrefix = p1SeriesWins >= 4 ? 'p1' : 'p2';
+            triggerSeriesEnd(champPrefix === 'p1' ? "PLAYER 1" : "PLAYER 2", champPrefix);
         } else {
             document.getElementById('next-game-btn').style.display = "inline-block";
         }
