@@ -45,16 +45,38 @@
             flex-direction: column;
             box-shadow: 0 0 30px rgba(0,0,0,0.9);
             padding-bottom: clamp(100px, 15vw, 140px);
+            position: relative;
         }
 
         header {
             text-align: center;
             padding: 15px 15px 0 15px;
+            position: relative;
         }
 
         .logo {
             max-width: clamp(200px, 50vw, 300px);
             height: auto;
+        }
+
+        .btn-logout {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: 1px solid #555;
+            color: #888;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: sans-serif;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        .btn-logout:hover {
+            color: var(--text-main);
+            border-color: var(--text-main);
         }
 
         /* Series Tracker */
@@ -269,13 +291,13 @@
         .splash-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             z-index: 1000;
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
         }
 
         .splash-content {
@@ -290,6 +312,26 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
+        }
+
+        /* Auth Inputs */
+        .auth-input {
+            width: 100%;
+            max-width: 350px;
+            padding: 12px;
+            margin-bottom: 15px;
+            background-color: #222;
+            border: 2px solid #555;
+            border-radius: 6px;
+            color: var(--text-main);
+            font-family: sans-serif;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .auth-input:focus {
+            border-color: var(--highlight-border);
+            outline: none;
         }
 
         #ot-splash-content {
@@ -338,7 +380,7 @@
             color: var(--highlight-border);
             border-bottom: 1px solid #333;
             font-size: clamp(1rem, 2.5vw, 1.3rem);
-            vertical-align: bottom; /* Forces perfect bottom alignment of avatars and text */
+            vertical-align: bottom;
         }
 
         .stats-table td {
@@ -405,7 +447,6 @@
             margin-left: auto;
             margin-right: auto;
         }
-
     </style>
 </head>
 <body>
@@ -413,6 +454,7 @@
 <div class="app-container">
     <header>
         <img src="logo.png" alt="Diceketball" class="logo" onerror="this.outerHTML='<h1>DICEKETBALL</h1>'">
+        <button id="btn-logout" class="btn-logout">Sign Out</button>
     </header>
 
     <div class="series-banner" id="series-banner">
@@ -466,6 +508,22 @@
     </div>
 </div>
 
+<!-- Authentication Splash Screen (Z-index 2000 to overlay everything) -->
+<div class="splash-overlay" id="auth-overlay" style="display: flex; z-index: 2000;">
+    <div class="splash-content">
+        <h1 class="splash-title" style="font-size: clamp(2rem, 6vw, 3rem); margin-bottom: 5px;">DICEKETBALL</h1>
+        <div class="splash-subtitle" style="margin-bottom: 25px;">Log in to save your stats</div>
+        
+        <input type="email" id="auth-email" class="auth-input" placeholder="Email Address">
+        <input type="password" id="auth-password" class="auth-input" placeholder="Password">
+        
+        <div id="auth-error" style="color: var(--reduce-color); font-family: sans-serif; font-size: 0.9rem; margin-bottom: 15px; min-height: 20px;"></div>
+        
+        <button class="btn-action" style="display: block; width: 100%; max-width: 350px; margin-bottom: 10px;" id="btn-login">LOGIN</button>
+        <button class="btn-action" style="display: block; width: 100%; max-width: 350px; background-color: #555; color: white;" id="btn-register">CREATE ACCOUNT</button>
+    </div>
+</div>
+
 <!-- Overtime Splash Screen -->
 <div class="splash-overlay" id="ot-splash-overlay">
     <div class="splash-content" id="ot-splash-content">
@@ -500,39 +558,14 @@
             <img id="game-p2-avatar" src="" class="game-splash-avatar">
         </div>
 
-        <!-- Replaced with Perfect Grid Table -->
         <table class="stats-table">
             <tbody>
-                <tr>
-                    <td id="game-p1-pts">-</td>
-                    <td class="label-col">PTS</td>
-                    <td id="game-p2-pts">-</td>
-                </tr>
-                <tr>
-                    <td id="game-p1-reb">-</td>
-                    <td class="label-col">REB</td>
-                    <td id="game-p2-reb">-</td>
-                </tr>
-                <tr>
-                    <td id="game-p1-ast">-</td>
-                    <td class="label-col">AST</td>
-                    <td id="game-p2-ast">-</td>
-                </tr>
-                <tr>
-                    <td id="game-p1-fgp">-</td>
-                    <td class="label-col">FG%</td>
-                    <td id="game-p2-fgp">-</td>
-                </tr>
-                <tr>
-                    <td id="game-p1-blk">-</td>
-                    <td class="label-col">BLK</td>
-                    <td id="game-p2-blk">-</td>
-                </tr>
-                <tr>
-                    <td id="game-p1-stl">-</td>
-                    <td class="label-col">STL</td>
-                    <td id="game-p2-stl">-</td>
-                </tr>
+                <tr><td id="game-p1-pts">-</td><td class="label-col">PTS</td><td id="game-p2-pts">-</td></tr>
+                <tr><td id="game-p1-reb">-</td><td class="label-col">REB</td><td id="game-p2-reb">-</td></tr>
+                <tr><td id="game-p1-ast">-</td><td class="label-col">AST</td><td id="game-p2-ast">-</td></tr>
+                <tr><td id="game-p1-fgp">-</td><td class="label-col">FG%</td><td id="game-p2-fgp">-</td></tr>
+                <tr><td id="game-p1-blk">-</td><td class="label-col">BLK</td><td id="game-p2-blk">-</td></tr>
+                <tr><td id="game-p1-stl">-</td><td class="label-col">STL</td><td id="game-p2-stl">-</td></tr>
             </tbody>
         </table>
         
@@ -557,54 +590,21 @@
     <div class="splash-content" id="series-splash-step2" style="display: none;">
         <div class="splash-subtitle" style="margin-bottom: 15px; font-size: clamp(1rem, 3vw, 1.4rem); color: var(--text-main);">Series Averages</div>
 
-        <!-- Replaced with Perfect Grid Table -->
         <table class="stats-table">
             <thead>
                 <tr>
-                    <th>
-                        <img id="splash-p1-recap-avatar" src="" class="recap-avatar">
-                        <span id="splash-p1-header" style="line-height: 1;">P1</span>
-                    </th>
-                    <th style="padding-bottom: 12px;">
-                        <span style="color:var(--text-muted); font-size: clamp(0.75rem, 2vw, 0.95rem); line-height: 1;">AVERAGES</span>
-                    </th>
-                    <th>
-                        <img id="splash-p2-recap-avatar" src="" class="recap-avatar">
-                        <span id="splash-p2-header" style="line-height: 1;">P2</span>
-                    </th>
+                    <th><img id="splash-p1-recap-avatar" src="" class="recap-avatar"><span id="splash-p1-header" style="line-height: 1;">P1</span></th>
+                    <th style="padding-bottom: 12px;"><span style="color:var(--text-muted); font-size: clamp(0.75rem, 2vw, 0.95rem); line-height: 1;">AVERAGES</span></th>
+                    <th><img id="splash-p2-recap-avatar" src="" class="recap-avatar"><span id="splash-p2-header" style="line-height: 1;">P2</span></th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td id="splash-p1-ppg">-</td>
-                    <td class="label-col">PPG</td>
-                    <td id="splash-p2-ppg">-</td>
-                </tr>
-                <tr>
-                    <td id="splash-p1-apg">-</td>
-                    <td class="label-col">APG</td>
-                    <td id="splash-p2-apg">-</td>
-                </tr>
-                <tr>
-                    <td id="splash-p1-rpg">-</td>
-                    <td class="label-col">RPG</td>
-                    <td id="splash-p2-rpg">-</td>
-                </tr>
-                <tr>
-                    <td id="splash-p1-spg">-</td>
-                    <td class="label-col">SPG</td>
-                    <td id="splash-p2-spg">-</td>
-                </tr>
-                <tr>
-                    <td id="splash-p1-bpg">-</td>
-                    <td class="label-col">BPG</td>
-                    <td id="splash-p2-bpg">-</td>
-                </tr>
-                <tr>
-                    <td id="splash-p1-fgp">-</td>
-                    <td class="label-col">FG%</td>
-                    <td id="splash-p2-fgp">-</td>
-                </tr>
+                <tr><td id="splash-p1-ppg">-</td><td class="label-col">PPG</td><td id="splash-p2-ppg">-</td></tr>
+                <tr><td id="splash-p1-apg">-</td><td class="label-col">APG</td><td id="splash-p2-apg">-</td></tr>
+                <tr><td id="splash-p1-rpg">-</td><td class="label-col">RPG</td><td id="splash-p2-rpg">-</td></tr>
+                <tr><td id="splash-p1-spg">-</td><td class="label-col">SPG</td><td id="splash-p2-spg">-</td></tr>
+                <tr><td id="splash-p1-bpg">-</td><td class="label-col">BPG</td><td id="splash-p2-bpg">-</td></tr>
+                <tr><td id="splash-p1-fgp">-</td><td class="label-col">FG%</td><td id="splash-p2-fgp">-</td></tr>
             </tbody>
         </table>
 
@@ -612,7 +612,87 @@
     </div>
 </div>
 
+<!-- Service Worker Registration -->
 <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js');
+    });
+  }
+</script>
+
+<!-- Main Game & Firebase Module -->
+<script type="module">
+    // 1. IMPORT FIREBASE SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // 2. CONFIGURE FIREBASE
+    const firebaseConfig = {
+      apiKey: "AIzaSyDA-0Pe3N50jLxu2HJDNrAmvCjxIsg_Wts",
+      authDomain: "diceketball.firebaseapp.com",
+      projectId: "diceketball",
+      storageBucket: "diceketball.firebasestorage.app",
+      messagingSenderId: "1071620049733",
+      appId: "1:1071620049733:web:a88839a5b5a2c681694c2c",
+      measurementId: "G-GCGEG5Q1XV"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+
+    // 3. AUTHENTICATION LOGIC
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('btn-logout').style.display = 'block';
+        } else {
+            currentUser = null;
+            document.getElementById('auth-overlay').style.display = 'flex';
+            document.getElementById('btn-logout').style.display = 'none';
+        }
+    });
+
+    document.getElementById('btn-login').addEventListener('click', () => {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-password').value;
+        document.getElementById('auth-error').innerText = "";
+        signInWithEmailAndPassword(auth, email, pass).catch(err => {
+            document.getElementById('auth-error').innerText = err.message.replace("Firebase: ", "");
+        });
+    });
+
+    document.getElementById('btn-register').addEventListener('click', () => {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-password').value;
+        document.getElementById('auth-error').innerText = "";
+        createUserWithEmailAndPassword(auth, email, pass).then((cred) => {
+            // Create the initial stats document for the new user
+            setDoc(doc(db, "users", cred.user.uid), {
+                seriesWins: 0,
+                seriesLosses: 0,
+                totalGamesPlayed: 0,
+                totalPoints: 0,
+                totalRebounds: 0,
+                totalAssists: 0,
+                totalBlocks: 0,
+                totalSteals: 0
+            });
+        }).catch(err => {
+            document.getElementById('auth-error').innerText = err.message.replace("Firebase: ", "");
+        });
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+        signOut(auth);
+    });
+
+    // 4. MAIN GAME LOGIC
     const profiles = {
         playmaker: { img: 'avatar-playmaker.png', desc: 'Boost: AST x2, FT x2<br>Reduce: BLK/2', abbr: 'PMK' },
         sniper: { img: 'avatar-sniper.png', desc: 'Boost: 3PT Extra Roll<br>Reduce: TO x2', abbr: 'SNP' },
@@ -644,15 +724,11 @@
 
     const rollSequence = ['fg2', 'fg3', 'ft', 'oreb', 'dreb', 'ast', 'to', 'stl', 'blk', 'pf'];
     let currentStep = 0;
-    
     let p1Data = {}, p2Data = {};
-    let p1SeriesWins = 0;
-    let p2SeriesWins = 0;
-
+    let p1SeriesWins = 0, p2SeriesWins = 0;
     let gamesPlayed = 0;
     let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
     let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
-    
     let pendingGameWinner = '';
 
     function initBoard() {
@@ -673,7 +749,6 @@
         const p1 = document.getElementById('p1-profile').value;
         const p2 = document.getElementById('p2-profile').value;
         const rollBtn = document.getElementById('roll-btn');
-
         if (p1 !== 'none' && p2 !== 'none' && currentStep === 0) {
             rollBtn.disabled = false;
             document.getElementById('status-text').innerText = "Ready for Tip Off! Click Roll to Start.";
@@ -709,7 +784,6 @@
             p2SeriesWins = 0;
             document.getElementById('p1-score').innerText = p1SeriesWins;
             document.getElementById('p2-score').innerText = p2SeriesWins;
-            
             document.getElementById('p1-name').innerText = 'P1';
             document.getElementById('p2-name').innerText = 'P2';
 
@@ -739,7 +813,6 @@
             document.getElementById('roll-btn').disabled = false;
             document.getElementById('concede-btn').style.display = "inline-block";
         }
-        
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -775,7 +848,6 @@
             if (profile === 'defender' || profile === 'rimprotector') { makes *= 2; isBoost = true; }
             if (profile === 'playmaker') { makes = Math.floor(makes / 2); isReduce = true; }
         } else if (statId === 'pf') { makes = rollD(6); }
-
         return { makes, attempts, isBoost, isReduce };
     }
 
@@ -857,6 +929,22 @@
         document.getElementById('series-splash-step1').style.display = 'flex';
         document.getElementById('series-splash-step2').style.display = 'none';
         document.getElementById('series-splash-overlay').style.display = 'flex';
+
+        // DATABASE PIPELINE: Push P1 Stats securely to the Cloud!
+        if (currentUser) {
+            const userRef = doc(db, "users", currentUser.uid);
+            let wonSeries = (champPrefix === 'p1');
+            updateDoc(userRef, {
+                seriesWins: increment(wonSeries ? 1 : 0),
+                seriesLosses: increment(wonSeries ? 0 : 1),
+                totalGamesPlayed: increment(gamesPlayed),
+                totalPoints: increment(p1SeriesStats.pts),
+                totalRebounds: increment(p1SeriesStats.treb),
+                totalAssists: increment(p1SeriesStats.ast),
+                totalBlocks: increment(p1SeriesStats.blk),
+                totalSteals: increment(p1SeriesStats.stl)
+            }).catch(err => console.error("Error saving stats: ", err));
+        }
     }
 
     function showRecapScreen() {
@@ -867,8 +955,7 @@
     function handleOvertime() {
         let otPeriod = 0;
         let otResolved = false;
-        let p1TotalOTRoll = 0;
-        let p2TotalOTRoll = 0;
+        let p1TotalOTRoll = 0, p2TotalOTRoll = 0;
 
         while(!otResolved) {
             otPeriod++;
@@ -876,17 +963,13 @@
             let p2Roll = rollD(6);
 
             if (otPeriod >= 4 && p1Roll === p2Roll) {
-                while(p2Roll === p1Roll) {
-                    p2Roll = rollD(6);
-                }
+                while(p2Roll === p1Roll) p2Roll = rollD(6);
             }
 
             p1TotalOTRoll += p1Roll;
             p2TotalOTRoll += p2Roll;
 
-            if (p1Roll !== p2Roll) {
-                otResolved = true;
-            }
+            if (p1Roll !== p2Roll) otResolved = true;
         }
 
         p1Data.pts += p1TotalOTRoll;
@@ -905,10 +988,8 @@
         const p2Profile = document.getElementById('p2-profile').value;
         document.getElementById('ot-p1-avatar').src = profiles[p1Profile].img;
         document.getElementById('ot-p2-avatar').src = profiles[p2Profile].img;
-        
         document.getElementById('ot-p1-score').innerText = p1TotalOTRoll;
         document.getElementById('ot-p2-score').innerText = p2TotalOTRoll;
-        
         document.getElementById('ot-winner-text').innerText = pendingGameWinner === 'p1' ? 'PLAYER 1 WINS IN OT!' : 'PLAYER 2 WINS IN OT!';
 
         document.getElementById('ot-splash-overlay').style.display = 'flex';
@@ -938,11 +1019,8 @@
         p2SeriesStats.fg_makes += (p2Data.fg2_makes + p2Data.fg3_makes);
         p2SeriesStats.fg_attempts += (p2Data.fg2_attempts + p2Data.fg3_attempts);
 
-        if (winnerPrefix === 'p1') {
-            p1SeriesWins++;
-        } else {
-            p2SeriesWins++;
-        }
+        if (winnerPrefix === 'p1') p1SeriesWins++;
+        else p2SeriesWins++;
 
         document.getElementById('game-splash-title').innerText = `GAME ${gamesPlayed} FINAL`;
         
@@ -950,10 +1028,8 @@
         const p2Profile = document.getElementById('p2-profile').value;
         
         document.getElementById('game-splash-winner-text').innerText = winnerPrefix === 'p1' ? `${profiles[p1Profile].abbr} WINS!` : `${profiles[p2Profile].abbr} WINS!`;
-        
         document.getElementById('game-p1-avatar').src = profiles[p1Profile].img;
         document.getElementById('game-p2-avatar').src = profiles[p2Profile].img;
-
         document.getElementById('game-p1-avatar').style.borderColor = winnerPrefix === 'p1' ? 'var(--highlight-border)' : 'var(--text-main)';
         document.getElementById('game-p2-avatar').style.borderColor = winnerPrefix === 'p2' ? 'var(--highlight-border)' : 'var(--text-main)';
 
@@ -979,7 +1055,6 @@
 
     function closeGameSplash() {
         document.getElementById('game-splash-overlay').style.display = 'none';
-
         document.getElementById('p1-score').innerText = p1SeriesWins;
         document.getElementById('p2-score').innerText = p2SeriesWins;
         document.getElementById('status-text').innerText = `GAME ${gamesPlayed} COMPLETE!`;
@@ -994,7 +1069,6 @@
 
     function evaluateGameWinner() {
         let p1Wins = 0, p2Wins = 0;
-        
         statsConfig.forEach(s => {
             if (document.getElementById(`p1-${s.id}`).classList.contains('winner-cell')) p1Wins++;
             if (document.getElementById(`p2-${s.id}`).classList.contains('winner-cell')) p2Wins++;
@@ -1018,11 +1092,8 @@
         }
 
         const statToRoll = rollSequence[currentStep];
-        
         const currentRowEl = document.getElementById(`row-${statToRoll}`);
-        if (currentRowEl) {
-            currentRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        if (currentRowEl) currentRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         const p1Profile = document.getElementById('p1-profile').value;
         const p2Profile = document.getElementById('p2-profile').value;
@@ -1061,11 +1132,9 @@
             renderCell('p1', 'ft_pct', `${p1Data.ft_pct}%`);
             renderCell('p2', 'ft_pct', `${p2Data.ft_pct}%`);
             evaluateWinner('ft_pct', p1Data.ft_pct, p2Data.ft_pct);
-
             renderCell('p1', 'pts', p1Data.pts, false, p1Data.pts_isReduce);
             renderCell('p2', 'pts', p2Data.pts, false, p2Data.pts_isReduce);
             evaluateWinner('pts', p1Data.pts, p2Data.pts);
-
             renderCell('p1', 'efg', `${p1Data.efg}%`);
             renderCell('p2', 'efg', `${p2Data.efg}%`);
             evaluateWinner('efg', p1Data.efg, p2Data.efg);
@@ -1097,15 +1166,15 @@
     }
 
     initBoard();
-</script>
 
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js');
-    });
-  }
-</script>
+    // 5. EXPOSE FUNCTIONS TO WINDOW FOR INLINE HTML CLICKS
+    window.updateProfile = updateProfile;
+    window.rollNext = rollNext;
+    window.resetMatch = resetMatch;
+    window.closeGameSplash = closeGameSplash;
+    window.closeOvertimeSplash = closeOvertimeSplash;
+    window.showRecapScreen = showRecapScreen;
 
+</script>
 </body>
 </html>
