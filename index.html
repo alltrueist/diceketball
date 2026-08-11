@@ -407,6 +407,8 @@
             margin: 0 0 10px 0;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             z-index: 2;
+            word-break: break-all;
+            text-align: center;
         }
 
         .card-record {
@@ -593,6 +595,7 @@
         <div class="header-controls">
             <button id="btn-leaderboard" class="btn-header btn-card">Leaderboard</button>
             <button id="btn-my-card" class="btn-header btn-card">My Card</button>
+            <button id="btn-account" class="btn-header">Account</button>
             <button id="btn-logout" class="btn-header">Sign Out</button>
         </div>
     </header>
@@ -654,7 +657,7 @@
         <h1 class="splash-title" style="font-size: clamp(2rem, 6vw, 3rem); margin-bottom: 5px;">DICEKETBALL</h1>
         <div class="splash-subtitle" style="margin-bottom: 25px;">Log in to save your stats</div>
         
-        <input type="text" id="auth-username" class="auth-input" placeholder="Username (For New Accounts)">
+        <input type="text" id="auth-username" class="auth-input" placeholder="Username (Alphanumeric only)">
         <input type="email" id="auth-email" class="auth-input" placeholder="Email Address">
         <input type="password" id="auth-password" class="auth-input" placeholder="Password">
         
@@ -665,11 +668,28 @@
     </div>
 </div>
 
+<!-- Account Management Overlay -->
+<div class="splash-overlay" id="account-overlay" style="z-index: 1500;">
+    <div class="splash-content">
+        <h1 class="splash-title" style="margin-bottom: 5px;">MY ACCOUNT</h1>
+        <div class="splash-subtitle" style="margin-bottom: 25px;">Update your details</div>
+        
+        <div style="font-family: sans-serif; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 5px; text-align: left; width: 100%; max-width: 350px;">Display Username (Letters & Numbers Only)</div>
+        <input type="text" id="account-username" class="auth-input" placeholder="Enter new username">
+        
+        <div id="account-error" style="color: var(--reduce-color); font-family: sans-serif; font-size: 0.9rem; margin-bottom: 15px; min-height: 20px;"></div>
+        <div id="account-success" style="color: var(--boost-color); font-family: sans-serif; font-size: 0.9rem; margin-bottom: 15px; min-height: 20px; display: none;">Username updated successfully!</div>
+        
+        <button class="btn-action" style="display: block; width: 100%; max-width: 350px; margin-bottom: 10px;" id="btn-save-account">SAVE CHANGES</button>
+        <button class="btn-action" style="display: block; width: 100%; max-width: 350px; background-color: #555; color: white;" onclick="closeAccount()">CLOSE</button>
+    </div>
+</div>
+
 <!-- Leaderboard Overlay -->
 <div class="splash-overlay" id="leaderboard-overlay" style="z-index: 1500;">
     <div class="splash-content" style="max-width: 700px;">
         <h1 class="splash-title" style="margin-bottom: 5px;">LEADERBOARDS</h1>
-        <div class="lb-note">* Minimum 10 games played required</div>
+        <div class="lb-note">* Minimum 10 games played required. Click a player to view their card!</div>
 
         <div class="lb-tabs" id="lb-tabs">
             <button class="lb-tab active" data-cat="wins">WINS</button>
@@ -686,8 +706,8 @@
             <table class="card-table">
                 <thead>
                     <tr>
-                        <th style="width: 20%;">RANK</th>
-                        <th style="width: 50%; text-align: left; padding-left: 10px;">USERNAME</th>
+                        <th style="width: 15%;">RANK</th>
+                        <th style="width: 55%; text-align: left; padding-left: 10px;">USERNAME</th>
                         <th style="width: 30%;" id="lb-stat-header">WINS</th>
                     </tr>
                 </thead>
@@ -701,8 +721,8 @@
     </div>
 </div>
 
-<!-- My Card Splash Screen -->
-<div class="splash-overlay" id="card-overlay" style="z-index: 1500;">
+<!-- Public/Private Card Splash Screen (Higher z-index to pop over leaderboard) -->
+<div class="splash-overlay" id="card-overlay" style="z-index: 1600;">
     <div class="bball-card">
         <img id="card-frame-image" src="" class="card-frame" onerror="this.style.display='none'">
         <div class="card-hologram"></div>
@@ -728,7 +748,7 @@
                 </tbody>
             </table>
         </div>
-        <button class="btn-action" style="display: block; width: 100%; margin-top: 20px; z-index: 20; padding: 10px;" onclick="closeMyCard()">CLOSE CARD</button>
+        <button class="btn-action" style="display: block; width: 100%; margin-top: 20px; z-index: 20; padding: 10px;" onclick="closeCardOverlay()">CLOSE CARD</button>
     </div>
 </div>
 
@@ -819,7 +839,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, increment, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, updateDoc, increment, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDA-0Pe3N50jLxu2HJDNrAmvCjxIsg_Wts",
@@ -837,17 +857,28 @@
 
     let currentUser = null;
 
+    const profiles = {
+        playmaker: { img: 'avatar-playmaker.png', desc: 'Boost: AST x2, FT x2<br>Reduce: BLK/2', abbr: 'PMK' },
+        sniper: { img: 'avatar-sniper.png', desc: 'Boost: 3PT Extra Roll<br>Reduce: TO x2', abbr: 'SNP' },
+        defender: { img: 'avatar-defender.png', desc: 'Boost: BLK x2, STL x2<br>Reduce: Points/2', abbr: 'DEF' },
+        dunker: { img: 'avatar-dunker.png', desc: 'Boost: 2PT Extra Roll, REB x1.5<br>Reduce: 3PT/2', abbr: 'DNK' },
+        rimprotector: { img: 'avatar-rimprotector.png', desc: 'Boost: BLK x2, REB x1.5<br>Reduce: FT/2, AST/2', abbr: 'RIM' },
+        stretch5: { img: 'avatar-stretch5.png', desc: 'Boost: 3PT Extra Roll<br>Reduce: OREB/2', abbr: 'ST5' }
+    };
+
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
             document.getElementById('auth-overlay').style.display = 'none';
             document.getElementById('btn-logout').style.display = 'block';
+            document.getElementById('btn-account').style.display = 'block';
             document.getElementById('btn-my-card').style.display = 'block';
             document.getElementById('btn-leaderboard').style.display = 'block';
         } else {
             currentUser = null;
             document.getElementById('auth-overlay').style.display = 'flex';
             document.getElementById('btn-logout').style.display = 'none';
+            document.getElementById('btn-account').style.display = 'none';
             document.getElementById('btn-my-card').style.display = 'none';
             document.getElementById('btn-leaderboard').style.display = 'none';
         }
@@ -862,16 +893,29 @@
         });
     });
 
-    document.getElementById('btn-register').addEventListener('click', () => {
+    document.getElementById('btn-register').addEventListener('click', async () => {
         const username = document.getElementById('auth-username').value.trim();
+        const errorEl = document.getElementById('auth-error');
+        errorEl.innerText = "";
+        
         if (!username) {
-            document.getElementById('auth-error').innerText = "Please enter a Username to create an account.";
+            errorEl.innerText = "Please enter a Username.";
+            return;
+        }
+        if (!/^[a-zA-Z0-9]+$/.test(username)) {
+            errorEl.innerText = "Username can only contain letters and numbers.";
+            return;
+        }
+
+        const q = query(collection(db, "users"), where("username", "==", username));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            errorEl.innerText = "That username is already taken. Please choose another.";
             return;
         }
         
         const email = document.getElementById('auth-email').value;
         const pass = document.getElementById('auth-password').value;
-        document.getElementById('auth-error').innerText = "";
         
         createUserWithEmailAndPassword(auth, email, pass).then((cred) => {
             setDoc(doc(db, "users", cred.user.uid), {
@@ -892,11 +936,66 @@
                 seriesHistory: []
             });
         }).catch(err => {
-            document.getElementById('auth-error').innerText = err.message.replace("Firebase: ", "");
+            errorEl.innerText = err.message.replace("Firebase: ", "");
         });
     });
 
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+    // ACCOUNT MANAGEMENT LOGIC
+    document.getElementById('btn-account').addEventListener('click', async () => {
+        if (!currentUser) return;
+        document.getElementById('account-error').innerText = "";
+        document.getElementById('account-success').style.display = "none";
+        
+        const userRef = doc(db, "users", currentUser.uid);
+        const docSnap = await getDoc(userRef);
+        if (docSnap.exists()) {
+            document.getElementById('account-username').value = docSnap.data().username || "";
+        }
+        document.getElementById('account-overlay').style.display = 'flex';
+    });
+
+    document.getElementById('btn-save-account').addEventListener('click', async () => {
+        const newName = document.getElementById('account-username').value.trim();
+        const errorEl = document.getElementById('account-error');
+        const successEl = document.getElementById('account-success');
+        
+        errorEl.innerText = "";
+        successEl.style.display = "none";
+
+        if (!newName) {
+            errorEl.innerText = "Username cannot be blank.";
+            return;
+        }
+        if (!/^[a-zA-Z0-9]+$/.test(newName)) {
+            errorEl.innerText = "Username can only contain letters and numbers.";
+            return;
+        }
+
+        const q = query(collection(db, "users"), where("username", "==", newName));
+        const querySnapshot = await getDocs(q);
+        
+        let takenByOther = false;
+        querySnapshot.forEach((docSnap) => {
+            if (docSnap.id !== currentUser.uid) {
+                takenByOther = true;
+            }
+        });
+
+        if (takenByOther) {
+            errorEl.innerText = "That username is already taken.";
+            return;
+        }
+
+        await updateDoc(doc(db, "users", currentUser.uid), { username: newName });
+        successEl.style.display = "block";
+    });
+
+    window.closeAccount = function() {
+        document.getElementById('account-overlay').style.display = 'none';
+    }
+
 
     // LEADERBOARD LOGIC
     let cachedLeaderboardData = [];
@@ -905,16 +1004,18 @@
         if (!currentUser) return;
         document.getElementById('leaderboard-overlay').style.display = 'flex';
         
-        // Fetch all users once per click to save database reads
         const querySnapshot = await getDocs(collection(db, "users"));
-        cachedLeaderboardData = querySnapshot.docs.map(doc => doc.data());
+        // Inject the uid into the data so we can click on players!
+        cachedLeaderboardData = querySnapshot.docs.map(doc => {
+            let d = doc.data();
+            d.uid = doc.id;
+            return d;
+        });
         
-        // Trigger initial render for Wins
         renderLeaderboard('wins');
     });
 
     function renderLeaderboard(category) {
-        // Filter minimum 10 games
         const eligibleUsers = cachedLeaderboardData.filter(u => (u.totalGamesPlayed || 0) >= 10);
         
         let list = eligibleUsers.map(u => {
@@ -922,6 +1023,19 @@
             let displayStr = "";
             let games = u.totalGamesPlayed || 0;
             let series = (u.seriesWins || 0) + (u.seriesLosses || 0);
+
+            // Determine Most Used Avatar for the Leaderboard
+            let mostUsed = 'none';
+            let maxCount = 0;
+            if (u.archetypeCounts) {
+                for (const [arch, count] of Object.entries(u.archetypeCounts)) {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        mostUsed = arch;
+                    }
+                }
+            }
+            let avatarSrc = (mostUsed !== 'none' && profiles[mostUsed]) ? profiles[mostUsed].img : '';
             
             switch(category) {
                 case 'wins': 
@@ -970,10 +1084,9 @@
                     document.getElementById('lb-stat-header').innerText = "FG% (3PT%)";
                     break;
             }
-            return { username: u.username || 'PLAYER', val: val, displayStr: displayStr };
+            return { uid: u.uid, username: u.username || 'PLAYER', val: val, displayStr: displayStr, avatarSrc: avatarSrc };
         });
 
-        // Sort descending and slice Top 10
         list.sort((a, b) => b.val - a.val);
         list = list.slice(0, 10);
 
@@ -987,17 +1100,23 @@
 
         list.forEach((item, index) => {
             let rankColor = index === 0 ? "var(--highlight-border)" : (index === 1 ? "#C0C0C0" : (index === 2 ? "#CD7F32" : "var(--text-main)"));
+            let avatarHtml = item.avatarSrc ? `<img src="${item.avatarSrc}" style="width: 28px; height: 28px; border-radius: 50%; vertical-align: middle; margin-right: 8px; border: 1px solid #555; object-fit: cover;">` : '';
+            
             tbody.innerHTML += `
                 <tr>
                     <td style="color: ${rankColor}; font-weight: bold; font-size: 1.2rem;">${index + 1}</td>
-                    <td style="text-align: left; padding-left: 10px; font-weight: bold; text-transform: uppercase;">${item.username}</td>
+                    <td style="text-align: left; padding-left: 10px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: color 0.2s;" 
+                        onclick="populateAndShowCard('${item.uid}')" 
+                        onmouseover="this.style.color='var(--highlight-border)'" 
+                        onmouseout="this.style.color='var(--text-main)'">
+                        ${avatarHtml}${item.username}
+                    </td>
                     <td style="color: var(--boost-color);">${item.displayStr}</td>
                 </tr>
             `;
         });
     }
 
-    // Tab Event Listeners
     document.querySelectorAll('.lb-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
             document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
@@ -1008,120 +1127,115 @@
 
     window.closeLeaderboard = function() {
         document.getElementById('leaderboard-overlay').style.display = 'none';
-        // Reset to first tab for next open
         document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
         document.querySelector('.lb-tab[data-cat="wins"]').classList.add('active');
     }
 
-    // BASKETBALL CARD LOGIC
-    document.getElementById('btn-my-card').addEventListener('click', () => {
-        if (!currentUser) return;
+    // SHARED BASKETBALL CARD LOGIC
+    window.populateAndShowCard = async function(targetUid) {
+        const userRef = doc(db, "users", targetUid);
+        const docSnap = await getDoc(userRef);
         
-        const userRef = doc(db, "users", currentUser.uid);
-        getDoc(userRef).then(docSnap => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                
-                document.getElementById('card-username-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
-                
-                let wins = data.seriesWins || 0;
-                let losses = data.seriesLosses || 0;
-                let totalSeries = wins + losses;
-                document.getElementById('card-record-display').innerText = `${wins}W - ${losses}L`;
-                
-                let winPct = totalSeries > 0 ? (wins / totalSeries) * 100 : 0;
-                let tier = "rookie";
-                let tierName = "ROOKIE";
-                let tierColor = "#888888"; 
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            
+            document.getElementById('card-username-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
+            
+            let wins = data.seriesWins || 0;
+            let losses = data.seriesLosses || 0;
+            let totalSeries = wins + losses;
+            document.getElementById('card-record-display').innerText = `${wins}W - ${losses}L`;
+            
+            let winPct = totalSeries > 0 ? (wins / totalSeries) * 100 : 0;
+            let tier = "rookie";
+            let tierName = "ROOKIE";
+            let tierColor = "#888888"; 
 
-                if (totalSeries > 0) {
-                    if (winPct >= 70) { tier = "mvp"; tierName = "MVP"; tierColor = "#A855F7"; }
-                    else if (winPct >= 50) { tier = "allstar"; tierName = "ALL-STAR"; tierColor = "#3B82F6"; }
-                    else if (winPct >= 30) { tier = "starter"; tierName = "STARTER"; tierColor = "#F97316"; }
-                }
+            if (totalSeries > 0) {
+                if (winPct >= 70) { tier = "mvp"; tierName = "MVP"; tierColor = "#A855F7"; }
+                else if (winPct >= 50) { tier = "allstar"; tierName = "ALL-STAR"; tierColor = "#3B82F6"; }
+                else if (winPct >= 30) { tier = "starter"; tierName = "STARTER"; tierColor = "#F97316"; }
+            }
 
-                document.getElementById('card-tier-display').innerText = `${tierName} TIER`;
-                document.getElementById('card-tier-display').style.color = tierColor;
-                document.getElementById('card-tier-display').style.borderColor = tierColor;
-                
-                const frameImg = document.getElementById('card-frame-image');
-                frameImg.src = `frame-${tier}.png`; 
-                frameImg.style.display = 'block';
-                
-                let mostUsed = 'none';
-                let maxCount = 0;
-                if (data.archetypeCounts) {
-                    for (const [arch, count] of Object.entries(data.archetypeCounts)) {
-                        if (count > maxCount) {
-                            maxCount = count;
-                            mostUsed = arch;
-                        }
+            document.getElementById('card-tier-display').innerText = `${tierName} TIER`;
+            document.getElementById('card-tier-display').style.color = tierColor;
+            document.getElementById('card-tier-display').style.borderColor = tierColor;
+            
+            const frameImg = document.getElementById('card-frame-image');
+            frameImg.src = `frame-${tier}.png`; 
+            frameImg.style.display = 'block';
+            
+            let mostUsed = 'none';
+            let maxCount = 0;
+            if (data.archetypeCounts) {
+                for (const [arch, count] of Object.entries(data.archetypeCounts)) {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        mostUsed = arch;
                     }
                 }
-                const avatarEl = document.getElementById('card-avatar');
-                if (mostUsed !== 'none' && profiles[mostUsed]) {
-                    avatarEl.src = profiles[mostUsed].img;
-                    avatarEl.style.display = 'block';
-                } else {
-                    avatarEl.style.display = 'none';
-                }
+            }
+            const avatarEl = document.getElementById('card-avatar');
+            if (mostUsed !== 'none' && profiles[mostUsed]) {
+                avatarEl.src = profiles[mostUsed].img;
+                avatarEl.style.display = 'block';
+            } else {
+                avatarEl.style.display = 'none';
+            }
 
-                const tbody = document.getElementById('card-table-body');
-                tbody.innerHTML = '';
-                const history = data.seriesHistory || [];
-                
-                history.forEach((series, index) => {
-                    let color = series.result === 'W' ? 'var(--boost-color)' : 'var(--reduce-color)';
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>#${history.length - index}</td>
-                            <td style="color: ${color}; font-weight: bold;">${series.result}</td>
-                            <td>${series.ppg}</td>
-                            <td>${series.rpg}</td>
-                            <td>${series.apg}</td>
-                            <td>${series.fgp}%</td>
-                        </tr>
-                    `;
-                });
-
-                for(let i = history.length; i < 5; i++) {
-                    tbody.innerHTML += `<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`;
-                }
-
-                let games = data.totalGamesPlayed || 0;
-                let cPpg = games > 0 ? (data.totalPoints / games).toFixed(1) : "0.0";
-                let cRpg = games > 0 ? (data.totalRebounds / games).toFixed(1) : "0.0";
-                let cApg = games > 0 ? (data.totalAssists / games).toFixed(1) : "0.0";
-                let att = data.totalFgAttempts || 0;
-                let cFgp = att > 0 ? Math.round((data.totalFgMakes / att) * 100) : 0;
-
+            const tbody = document.getElementById('card-table-body');
+            tbody.innerHTML = '';
+            const history = data.seriesHistory || [];
+            
+            history.forEach((series, index) => {
+                let color = series.result === 'W' ? 'var(--boost-color)' : 'var(--reduce-color)';
                 tbody.innerHTML += `
-                    <tr class="career-row">
-                        <td colspan="2">CAREER</td>
-                        <td>${cPpg}</td>
-                        <td>${cRpg}</td>
-                        <td>${cApg}</td>
-                        <td>${cFgp}%</td>
+                    <tr>
+                        <td>#${history.length - index}</td>
+                        <td style="color: ${color}; font-weight: bold;">${series.result}</td>
+                        <td>${series.ppg}</td>
+                        <td>${series.rpg}</td>
+                        <td>${series.apg}</td>
+                        <td>${series.fgp}%</td>
                     </tr>
                 `;
-                document.getElementById('card-overlay').style.display = 'flex';
+            });
+
+            for(let i = history.length; i < 5; i++) {
+                tbody.innerHTML += `<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`;
             }
-        });
+
+            let games = data.totalGamesPlayed || 0;
+            let cPpg = games > 0 ? (data.totalPoints / games).toFixed(1) : "0.0";
+            let cRpg = games > 0 ? (data.totalRebounds / games).toFixed(1) : "0.0";
+            let cApg = games > 0 ? (data.totalAssists / games).toFixed(1) : "0.0";
+            let att = data.totalFgAttempts || 0;
+            let cFgp = att > 0 ? Math.round((data.totalFgMakes / att) * 100) : 0;
+
+            tbody.innerHTML += `
+                <tr class="career-row">
+                    <td colspan="2">CAREER</td>
+                    <td>${cPpg}</td>
+                    <td>${cRpg}</td>
+                    <td>${cApg}</td>
+                    <td>${cFgp}%</td>
+                </tr>
+            `;
+            document.getElementById('card-overlay').style.display = 'flex';
+        }
+    }
+
+    document.getElementById('btn-my-card').addEventListener('click', () => {
+        if (currentUser) {
+            populateAndShowCard(currentUser.uid);
+        }
     });
 
-    window.closeMyCard = function() {
+    window.closeCardOverlay = function() {
         document.getElementById('card-overlay').style.display = 'none';
     }
 
-    const profiles = {
-        playmaker: { img: 'avatar-playmaker.png', desc: 'Boost: AST x2, FT x2<br>Reduce: BLK/2', abbr: 'PMK' },
-        sniper: { img: 'avatar-sniper.png', desc: 'Boost: 3PT Extra Roll<br>Reduce: TO x2', abbr: 'SNP' },
-        defender: { img: 'avatar-defender.png', desc: 'Boost: BLK x2, STL x2<br>Reduce: Points/2', abbr: 'DEF' },
-        dunker: { img: 'avatar-dunker.png', desc: 'Boost: 2PT Extra Roll, REB x1.5<br>Reduce: 3PT/2', abbr: 'DNK' },
-        rimprotector: { img: 'avatar-rimprotector.png', desc: 'Boost: BLK x2, REB x1.5<br>Reduce: FT/2, AST/2', abbr: 'RIM' },
-        stretch5: { img: 'avatar-stretch5.png', desc: 'Boost: 3PT Extra Roll<br>Reduce: OREB/2', abbr: 'ST5' }
-    };
-
+    // MAIN GAME LOGIC
     const statsConfig = [
         { id: 'fg2', name: '2-Point FG' },
         { id: 'fg2_pct', name: '2-Point %', isCalc: true },
@@ -1148,7 +1262,6 @@
     let p1SeriesWins = 0, p2SeriesWins = 0;
     let gamesPlayed = 0;
     
-    // UPDATED: Added fg3_makes and fg3_attempts arrays for accumulation
     let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
     let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
     let pendingGameWinner = '';
@@ -1361,7 +1474,6 @@
                     newHistory.unshift(newSeriesObj); 
                     if (newHistory.length > 5) newHistory.pop(); 
 
-                    // UPDATED: Now pushing 3PT stats to Firebase!
                     updateDoc(userRef, {
                         seriesWins: increment(wonSeries ? 1 : 0),
                         seriesLosses: increment(wonSeries ? 0 : 1),
@@ -1425,7 +1537,6 @@
     function finalizeGame(winnerPrefix) {
         gamesPlayed++;
         
-        // UPDATED: Now locally accumulating 3PT stats before series end
         p1SeriesStats.pts += p1Data.pts; p1SeriesStats.ast += p1Data.ast_makes; p1SeriesStats.treb += p1Data.treb;
         p1SeriesStats.stl += p1Data.stl_makes; p1SeriesStats.blk += p1Data.blk_makes;
         p1SeriesStats.fg_makes += (p1Data.fg2_makes + p1Data.fg3_makes); p1SeriesStats.fg_attempts += (p1Data.fg2_attempts + p1Data.fg3_attempts);
@@ -1555,7 +1666,9 @@
     window.closeOvertimeSplash = closeOvertimeSplash;
     window.showRecapScreen = showRecapScreen;
     window.closeLeaderboard = closeLeaderboard;
-    window.closeMyCard = closeMyCard;
+    window.populateAndShowCard = populateAndShowCard;
+    window.closeCardOverlay = closeCardOverlay;
+    window.closeAccount = closeAccount;
 </script>
 </body>
 </html>
