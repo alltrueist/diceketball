@@ -356,22 +356,26 @@
             border-radius: 12px;
             width: 90%;
             max-width: 450px;
-            padding: 30px 15px;
+            
+            /* UPDATED FIX: Heavy padding to account for the MVP frame borders */
+            /* Top: 130px, Right: 50px, Bottom: 100px, Left: 50px (Scales on small screens) */
+            padding: clamp(100px, 22vw, 130px) clamp(35px, 10vw, 55px) clamp(80px, 18vw, 100px) clamp(35px, 10vw, 55px);
+            
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
             overflow: hidden;
-            /* Base border color if frame doesn't load */
-            border: 2px solid #555;
+            border: 2px solid #555; /* Base border color if frame doesn't load */
+            box-sizing: border-box; /* Forces padding inward so the card doesn't stretch outside the screen */
         }
 
         .card-frame {
             position: absolute;
             top: 0; left: 0; 
             width: 100%; height: 100%;
-            pointer-events: none; /* Lets clicks pass through */
+            pointer-events: none; 
             z-index: 10;
             object-fit: fill; 
         }
@@ -416,7 +420,7 @@
         }
 
         .card-table-wrapper {
-            width: 95%;
+            width: 100%; /* Spreads fully within the new inner safe area */
             background: rgba(0,0,0,0.6);
             border-radius: 8px;
             border: 1px solid #444;
@@ -428,19 +432,19 @@
             width: 100%;
             border-collapse: collapse;
             font-family: sans-serif;
-            font-size: clamp(0.75rem, 2.5vw, 0.95rem);
+            font-size: clamp(0.7rem, 2vw, 0.9rem); /* Slightly smaller to fit constrained width */
         }
 
         .card-table th {
             background: #000;
             color: var(--text-muted);
-            padding: 8px 4px;
+            padding: 8px 2px;
             border-bottom: 1px solid #444;
             text-transform: uppercase;
         }
 
         .card-table td {
-            padding: 8px 4px;
+            padding: 8px 2px;
             text-align: center;
             border-bottom: 1px solid #222;
             color: var(--text-main);
@@ -528,7 +532,7 @@
             border-radius: 50%;
             border: 4px solid var(--highlight-border);
             object-fit: cover;
-            margin: clamp(15px, 4vw, 25px) 0;
+            margin: clamp(10px, 3vw, 15px) 0;
             box-shadow: 0 0 20px rgba(0,0,0, 0.8);
             z-index: 2;
         }
@@ -634,7 +638,7 @@
         <div class="card-hologram"></div>
         <div id="card-tier-display" class="card-tier-badge">ROOKIE TIER</div>
         
-        <img id="card-avatar" src="" class="champ-avatar" style="margin-top: 5px; border-color: #444;" onerror="this.style.display='none'">
+        <img id="card-avatar" src="" class="champ-avatar" style="border-color: #444;" onerror="this.style.display='none'">
         <h2 id="card-username-display" class="card-username">PLAYER</h2>
         <div id="card-record-display" class="card-record">0W - 0L</div>
         
@@ -655,7 +659,7 @@
                 </tbody>
             </table>
         </div>
-        <button class="btn-action" style="display: block; width: 90%; margin-top: 20px; z-index: 20; padding: 10px;" onclick="closeMyCard()">CLOSE CARD</button>
+        <button class="btn-action" style="display: block; width: 100%; margin-top: 20px; z-index: 20; padding: 10px;" onclick="closeMyCard()">CLOSE CARD</button>
     </div>
 </div>
 
@@ -877,7 +881,7 @@
                 
                 // Dynamically load the custom frame image
                 const frameImg = document.getElementById('card-frame-image');
-                frameImg.src = `frame-${tier}.png`;
+                frameImg.src = `frame-${tier}.png`; // or .jpg if using jpgs
                 frameImg.style.display = 'block';
                 
                 // Determine Most Used Avatar
