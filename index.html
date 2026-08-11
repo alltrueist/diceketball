@@ -52,17 +52,26 @@
             text-align: center;
             padding: 15px 15px 0 15px;
             position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .logo {
-            max-width: clamp(200px, 50vw, 300px);
+            max-width: clamp(180px, 45vw, 250px);
             height: auto;
         }
 
-        .btn-logout {
+        .header-controls {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            right: 15px;
+            top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .btn-header {
             background: none;
             border: 1px solid #555;
             color: #888;
@@ -72,11 +81,18 @@
             font-family: sans-serif;
             font-size: 0.8rem;
             display: none;
+            text-transform: uppercase;
+            font-weight: bold;
         }
 
-        .btn-logout:hover {
+        .btn-header:hover {
             color: var(--text-main);
             border-color: var(--text-main);
+        }
+        
+        .btn-card {
+            border-color: var(--highlight-border);
+            color: var(--highlight-border);
         }
 
         /* Series Tracker */
@@ -334,30 +350,90 @@
             outline: none;
         }
 
-        #ot-splash-content {
-            border-color: var(--reduce-color);
-            box-shadow: 0 0 30px rgba(248, 113, 113, 0.3);
+        /* Basketball Card UI */
+        .bball-card {
+            background: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 100%);
+            border: 4px solid var(--highlight-border);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            padding: 20px 10px;
+            box-shadow: 0 0 40px rgba(251, 191, 36, 0.3), inset 0 0 20px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
         }
 
-        .splash-title {
-            color: var(--boost-color);
-            font-size: clamp(1.8rem, 6vw, 2.8rem);
-            margin-top: 0;
-            margin-bottom: 5px;
-            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
-            animation: pulse 1.5s infinite;
+        .card-hologram {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(125deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.05) 40%, rgba(255,255,255,0) 50%);
+            pointer-events: none;
+            z-index: 1;
         }
 
-        .splash-subtitle {
-            color: var(--text-muted);
+        .card-username {
+            color: var(--highlight-border);
+            font-size: clamp(2rem, 6vw, 2.5rem);
+            margin: 0 0 15px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 2;
+        }
+
+        .card-record {
             font-family: sans-serif;
-            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            z-index: 2;
         }
 
-        /* New Table-Based Stats Alignment */
+        .card-table-wrapper {
+            width: 95%;
+            background: rgba(0,0,0,0.6);
+            border-radius: 8px;
+            border: 1px solid #444;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .card-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: sans-serif;
+            font-size: clamp(0.75rem, 2.5vw, 0.95rem);
+        }
+
+        .card-table th {
+            background: #000;
+            color: var(--text-muted);
+            padding: 8px 4px;
+            border-bottom: 1px solid #444;
+            text-transform: uppercase;
+        }
+
+        .card-table td {
+            padding: 8px 4px;
+            text-align: center;
+            border-bottom: 1px solid #222;
+            color: var(--text-main);
+        }
+
+        .card-table tr.career-row {
+            background: rgba(251, 191, 36, 0.15);
+            font-weight: bold;
+        }
+
+        .card-table tr.career-row td {
+            border-top: 2px solid var(--highlight-border);
+            border-bottom: none;
+            color: var(--highlight-border);
+        }
+
+        /* General Tables */
         .stats-table {
             width: 100%;
             border-collapse: separate; 
@@ -399,10 +475,6 @@
             color: var(--text-muted);
         }
 
-        .stats-table tr:last-child td {
-            border-bottom: none;
-        }
-
         /* Scalable Avatar Classes for Splash Screens */
         .ot-avatar {
             width: clamp(65px, 16vw, 100px);
@@ -434,6 +506,7 @@
             object-fit: cover;
             margin: clamp(15px, 4vw, 25px) 0;
             box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+            z-index: 2;
         }
 
         .recap-avatar {
@@ -454,7 +527,10 @@
 <div class="app-container">
     <header>
         <img src="logo.png" alt="Diceketball" class="logo" onerror="this.outerHTML='<h1>DICEKETBALL</h1>'">
-        <button id="btn-logout" class="btn-logout">Sign Out</button>
+        <div class="header-controls">
+            <button id="btn-my-card" class="btn-header btn-card">My Card</button>
+            <button id="btn-logout" class="btn-header">Sign Out</button>
+        </div>
     </header>
 
     <div class="series-banner" id="series-banner">
@@ -508,12 +584,13 @@
     </div>
 </div>
 
-<!-- Authentication Splash Screen (Z-index 2000 to overlay everything) -->
+<!-- Authentication Splash Screen -->
 <div class="splash-overlay" id="auth-overlay" style="display: flex; z-index: 2000;">
     <div class="splash-content">
         <h1 class="splash-title" style="font-size: clamp(2rem, 6vw, 3rem); margin-bottom: 5px;">DICEKETBALL</h1>
         <div class="splash-subtitle" style="margin-bottom: 25px;">Log in to save your stats</div>
         
+        <input type="text" id="auth-username" class="auth-input" placeholder="Username (For New Accounts)">
         <input type="email" id="auth-email" class="auth-input" placeholder="Email Address">
         <input type="password" id="auth-password" class="auth-input" placeholder="Password">
         
@@ -521,6 +598,35 @@
         
         <button class="btn-action" style="display: block; width: 100%; max-width: 350px; margin-bottom: 10px;" id="btn-login">LOGIN</button>
         <button class="btn-action" style="display: block; width: 100%; max-width: 350px; background-color: #555; color: white;" id="btn-register">CREATE ACCOUNT</button>
+    </div>
+</div>
+
+<!-- My Card Splash Screen -->
+<div class="splash-overlay" id="card-overlay" style="z-index: 1500;">
+    <div class="bball-card">
+        <div class="card-hologram"></div>
+        <img id="card-avatar" src="" class="champ-avatar" style="margin-top: 10px;" onerror="this.style.display='none'">
+        <h2 id="card-username-display" class="card-username">PLAYER</h2>
+        <div id="card-record-display" class="card-record">0 SERIES WINS - 0 SERIES LOSSES</div>
+        
+        <div class="card-table-wrapper">
+            <table class="card-table">
+                <thead>
+                    <tr>
+                        <th>SERIES</th>
+                        <th>RES</th>
+                        <th>PPG</th>
+                        <th>RPG</th>
+                        <th>APG</th>
+                        <th>FG%</th>
+                    </tr>
+                </thead>
+                <tbody id="card-table-body">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+        <button class="btn-action" style="display: block; width: 90%; margin-top: 20px; z-index: 2; padding: 10px;" onclick="closeMyCard()">CLOSE CARD</button>
     </div>
 </div>
 
@@ -575,7 +681,6 @@
 
 <!-- Sequenced Series End Splash Screen -->
 <div class="splash-overlay" id="series-splash-overlay">
-    <!-- Step 1: Champion Spotlight -->
     <div class="splash-content" id="series-splash-step1">
         <h1 class="splash-title" id="splash-champ">🏆 PLAYER 1 WINS! 🏆</h1>
         <img id="splash-champ-avatar" src="" alt="Champion" class="champ-avatar">
@@ -586,7 +691,6 @@
         <button class="btn-action" style="display: block; width: 100%;" onclick="showRecapScreen()">RECAP</button>
     </div>
 
-    <!-- Step 2: Stats Recap -->
     <div class="splash-content" id="series-splash-step2" style="display: none;">
         <div class="splash-subtitle" style="margin-bottom: 15px; font-size: clamp(1rem, 3vw, 1.4rem); color: var(--text-main);">Series Averages</div>
 
@@ -612,7 +716,6 @@
     </div>
 </div>
 
-<!-- Service Worker Registration -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -621,12 +724,11 @@
   }
 </script>
 
-<!-- Main Game & Firebase Module -->
 <script type="module">
     // 1. IMPORT FIREBASE SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // 2. CONFIGURE FIREBASE
     const firebaseConfig = {
@@ -651,10 +753,12 @@
             currentUser = user;
             document.getElementById('auth-overlay').style.display = 'none';
             document.getElementById('btn-logout').style.display = 'block';
+            document.getElementById('btn-my-card').style.display = 'block';
         } else {
             currentUser = null;
             document.getElementById('auth-overlay').style.display = 'flex';
             document.getElementById('btn-logout').style.display = 'none';
+            document.getElementById('btn-my-card').style.display = 'none';
         }
     });
 
@@ -668,12 +772,19 @@
     });
 
     document.getElementById('btn-register').addEventListener('click', () => {
+        const username = document.getElementById('auth-username').value.trim();
+        if (!username) {
+            document.getElementById('auth-error').innerText = "Please enter a Username to create an account.";
+            return;
+        }
+        
         const email = document.getElementById('auth-email').value;
         const pass = document.getElementById('auth-password').value;
         document.getElementById('auth-error').innerText = "";
+        
         createUserWithEmailAndPassword(auth, email, pass).then((cred) => {
-            // Create the initial stats document for the new user
             setDoc(doc(db, "users", cred.user.uid), {
+                username: username,
                 seriesWins: 0,
                 seriesLosses: 0,
                 totalGamesPlayed: 0,
@@ -681,16 +792,100 @@
                 totalRebounds: 0,
                 totalAssists: 0,
                 totalBlocks: 0,
-                totalSteals: 0
+                totalSteals: 0,
+                totalFgMakes: 0,
+                totalFgAttempts: 0,
+                archetypeCounts: {},
+                seriesHistory: []
             });
         }).catch(err => {
             document.getElementById('auth-error').innerText = err.message.replace("Firebase: ", "");
         });
     });
 
-    document.getElementById('btn-logout').addEventListener('click', () => {
-        signOut(auth);
+    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+    // BASKETBALL CARD LOGIC
+    document.getElementById('btn-my-card').addEventListener('click', () => {
+        if (!currentUser) return;
+        
+        const userRef = doc(db, "users", currentUser.uid);
+        getDoc(userRef).then(docSnap => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                
+                document.getElementById('card-username-display').innerText = data.username ? data.username.toUpperCase() : "ROOKIE";
+                document.getElementById('card-record-display').innerText = `${data.seriesWins || 0} SERIES WINS - ${data.seriesLosses || 0} SERIES LOSSES`;
+                
+                // Determine Most Used Avatar
+                let mostUsed = 'none';
+                let maxCount = 0;
+                if (data.archetypeCounts) {
+                    for (const [arch, count] of Object.entries(data.archetypeCounts)) {
+                        if (count > maxCount) {
+                            maxCount = count;
+                            mostUsed = arch;
+                        }
+                    }
+                }
+                const avatarEl = document.getElementById('card-avatar');
+                if (mostUsed !== 'none' && profiles[mostUsed]) {
+                    avatarEl.src = profiles[mostUsed].img;
+                    avatarEl.style.display = 'block';
+                } else {
+                    avatarEl.style.display = 'none';
+                }
+
+                // Populate Series History
+                const tbody = document.getElementById('card-table-body');
+                tbody.innerHTML = '';
+                const history = data.seriesHistory || [];
+                
+                history.forEach((series, index) => {
+                    let color = series.result === 'W' ? 'var(--boost-color)' : 'var(--reduce-color)';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${history.length - index}</td>
+                            <td style="color: ${color}; font-weight: bold;">${series.result}</td>
+                            <td>${series.ppg}</td>
+                            <td>${series.rpg}</td>
+                            <td>${series.apg}</td>
+                            <td>${series.fgp}%</td>
+                        </tr>
+                    `;
+                });
+
+                // Fill empty rows if less than 5 series played
+                for(let i = history.length; i < 5; i++) {
+                    tbody.innerHTML += `<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`;
+                }
+
+                // Career Averages Row
+                let games = data.totalGamesPlayed || 0;
+                let cPpg = games > 0 ? (data.totalPoints / games).toFixed(1) : "0.0";
+                let cRpg = games > 0 ? (data.totalRebounds / games).toFixed(1) : "0.0";
+                let cApg = games > 0 ? (data.totalAssists / games).toFixed(1) : "0.0";
+                let att = data.totalFgAttempts || 0;
+                let cFgp = att > 0 ? Math.round((data.totalFgMakes / att) * 100) : 0;
+
+                tbody.innerHTML += `
+                    <tr class="career-row">
+                        <td colspan="2">CAREER</td>
+                        <td>${cPpg}</td>
+                        <td>${cRpg}</td>
+                        <td>${cApg}</td>
+                        <td>${cFgp}%</td>
+                    </tr>
+                `;
+
+                document.getElementById('card-overlay').style.display = 'flex';
+            }
+        });
     });
+
+    window.closeMyCard = function() {
+        document.getElementById('card-overlay').style.display = 'none';
+    }
 
     // 4. MAIN GAME LOGIC
     const profiles = {
@@ -792,20 +987,14 @@
             p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
 
             document.getElementById('series-splash-overlay').style.display = 'none';
-
             document.getElementById('p1-profile').value = 'none';
             document.getElementById('p2-profile').value = 'none';
             document.getElementById('p1-profile').disabled = false;
             document.getElementById('p2-profile').disabled = false;
-
-            document.getElementById('p1-avatar').src = '';
             document.getElementById('p1-avatar').style.display = 'none';
-            document.getElementById('p2-avatar').src = '';
             document.getElementById('p2-avatar').style.display = 'none';
-            
             document.getElementById('p1-traits').innerHTML = "Select an archetype to view traits.";
             document.getElementById('p2-traits').innerHTML = "Select an archetype to view traits.";
-
             document.getElementById('status-text').innerText = "Waiting for Players to select archetypes...";
             document.getElementById('roll-btn').disabled = true;
         } else {
@@ -855,18 +1044,14 @@
         pData.fg2_pct = pData.fg2_attempts > 0 ? Math.round((pData.fg2_makes / pData.fg2_attempts) * 100) : 0;
         pData.fg3_pct = pData.fg3_attempts > 0 ? Math.round((pData.fg3_makes / pData.fg3_attempts) * 100) : 0;
         pData.ft_pct = pData.ft_attempts > 0 ? Math.round((pData.ft_makes / pData.ft_attempts) * 100) : 0;
-
         let rawPoints = (pData.fg2_makes * 2) + (pData.fg3_makes * 3) + pData.ft_makes;
         if (profile === 'defender') { pData.pts = Math.floor(rawPoints / 2); pData.pts_isReduce = true; } 
         else { pData.pts = rawPoints; }
-
         let totalFGA = (pData.fg2_attempts || 0) + (pData.fg3_attempts || 0);
         pData.efg = totalFGA > 0 ? Math.round(((pData.fg2_makes + (1.5 * pData.fg3_makes)) / totalFGA) * 100) : 0;
-
         let rawReb = (pData.oreb_makes || 0) + (pData.dreb_makes || 0);
         if (profile === 'dunker' || profile === 'rimprotector') { pData.treb = Math.floor(rawReb * 1.5); pData.treb_isBoost = true; } 
         else { pData.treb = rawReb; }
-
         let ast = pData.ast_makes || 0;
         let to = pData.to_makes || 0;
         pData.ast_to_raw = to === 0 ? ast : parseFloat((ast / to).toFixed(1));
@@ -886,7 +1071,6 @@
         const el2 = document.getElementById(`p2-${statId}`);
         el1.classList.remove('winner-cell');
         el2.classList.remove('winner-cell');
-
         if (val1 === val2) {
             el1.classList.add('winner-cell');
             el2.classList.add('winner-cell');
@@ -930,20 +1114,46 @@
         document.getElementById('series-splash-step2').style.display = 'none';
         document.getElementById('series-splash-overlay').style.display = 'flex';
 
-        // DATABASE PIPELINE: Push P1 Stats securely to the Cloud!
         if (currentUser) {
             const userRef = doc(db, "users", currentUser.uid);
-            let wonSeries = (champPrefix === 'p1');
-            updateDoc(userRef, {
-                seriesWins: increment(wonSeries ? 1 : 0),
-                seriesLosses: increment(wonSeries ? 0 : 1),
-                totalGamesPlayed: increment(gamesPlayed),
-                totalPoints: increment(p1SeriesStats.pts),
-                totalRebounds: increment(p1SeriesStats.treb),
-                totalAssists: increment(p1SeriesStats.ast),
-                totalBlocks: increment(p1SeriesStats.blk),
-                totalSteals: increment(p1SeriesStats.stl)
-            }).catch(err => console.error("Error saving stats: ", err));
+            getDoc(userRef).then(docSnap => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    let wonSeries = (champPrefix === 'p1');
+                    
+                    // Update Archetype Tallies
+                    let newCounts = data.archetypeCounts || {};
+                    newCounts[p1Profile] = (newCounts[p1Profile] || 0) + 1;
+
+                    // Update Recent Series History
+                    let newSeriesObj = {
+                        result: wonSeries ? 'W' : 'L',
+                        ppg: (p1SeriesStats.pts / gamesPlayed).toFixed(1),
+                        rpg: (p1SeriesStats.treb / gamesPlayed).toFixed(1),
+                        apg: (p1SeriesStats.ast / gamesPlayed).toFixed(1),
+                        fgp: p1Fgp
+                    };
+                    let newHistory = data.seriesHistory || [];
+                    newHistory.unshift(newSeriesObj); // Add to beginning
+                    if (newHistory.length > 5) newHistory.pop(); // Keep only 5 most recent
+
+                    // Write Everything Back
+                    updateDoc(userRef, {
+                        seriesWins: increment(wonSeries ? 1 : 0),
+                        seriesLosses: increment(wonSeries ? 0 : 1),
+                        totalGamesPlayed: increment(gamesPlayed),
+                        totalPoints: increment(p1SeriesStats.pts),
+                        totalRebounds: increment(p1SeriesStats.treb),
+                        totalAssists: increment(p1SeriesStats.ast),
+                        totalBlocks: increment(p1SeriesStats.blk),
+                        totalSteals: increment(p1SeriesStats.stl),
+                        totalFgMakes: increment(p1SeriesStats.fg_makes),
+                        totalFgAttempts: increment(p1SeriesStats.fg_attempts),
+                        archetypeCounts: newCounts,
+                        seriesHistory: newHistory
+                    }).catch(err => console.error("Error saving stats: ", err));
+                }
+            });
         }
     }
 
@@ -953,45 +1163,31 @@
     }
 
     function handleOvertime() {
-        let otPeriod = 0;
-        let otResolved = false;
-        let p1TotalOTRoll = 0, p2TotalOTRoll = 0;
-
+        let otPeriod = 0, otResolved = false, p1TotalOTRoll = 0, p2TotalOTRoll = 0;
         while(!otResolved) {
             otPeriod++;
-            let p1Roll = rollD(6);
-            let p2Roll = rollD(6);
-
+            let p1Roll = rollD(6), p2Roll = rollD(6);
             if (otPeriod >= 4 && p1Roll === p2Roll) {
                 while(p2Roll === p1Roll) p2Roll = rollD(6);
             }
-
-            p1TotalOTRoll += p1Roll;
-            p2TotalOTRoll += p2Roll;
-
+            p1TotalOTRoll += p1Roll; p2TotalOTRoll += p2Roll;
             if (p1Roll !== p2Roll) otResolved = true;
         }
 
-        p1Data.pts += p1TotalOTRoll;
-        p2Data.pts += p2TotalOTRoll;
-        
+        p1Data.pts += p1TotalOTRoll; p2Data.pts += p2TotalOTRoll;
         renderCell('p1', 'pts', p1Data.pts, false, p1Data.pts_isReduce);
         renderCell('p2', 'pts', p2Data.pts, false, p2Data.pts_isReduce);
         evaluateWinner('pts', p1Data.pts, p2Data.pts);
 
         pendingGameWinner = p1TotalOTRoll > p2TotalOTRoll ? 'p1' : 'p2';
-        
         let otTitleStr = otPeriod === 1 ? 'OVERTIME' : (otPeriod === 2 ? 'DOUBLE OVERTIME' : (otPeriod === 3 ? 'TRIPLE OVERTIME' : 'QUADRUPLE OVERTIME'));
         document.getElementById('ot-title').innerText = otTitleStr;
         
-        const p1Profile = document.getElementById('p1-profile').value;
-        const p2Profile = document.getElementById('p2-profile').value;
-        document.getElementById('ot-p1-avatar').src = profiles[p1Profile].img;
-        document.getElementById('ot-p2-avatar').src = profiles[p2Profile].img;
+        document.getElementById('ot-p1-avatar').src = profiles[document.getElementById('p1-profile').value].img;
+        document.getElementById('ot-p2-avatar').src = profiles[document.getElementById('p2-profile').value].img;
         document.getElementById('ot-p1-score').innerText = p1TotalOTRoll;
         document.getElementById('ot-p2-score').innerText = p2TotalOTRoll;
         document.getElementById('ot-winner-text').innerText = pendingGameWinner === 'p1' ? 'PLAYER 1 WINS IN OT!' : 'PLAYER 2 WINS IN OT!';
-
         document.getElementById('ot-splash-overlay').style.display = 'flex';
     }
 
@@ -1002,28 +1198,16 @@
 
     function finalizeGame(winnerPrefix) {
         gamesPlayed++;
+        p1SeriesStats.pts += p1Data.pts; p1SeriesStats.ast += p1Data.ast_makes; p1SeriesStats.treb += p1Data.treb;
+        p1SeriesStats.stl += p1Data.stl_makes; p1SeriesStats.blk += p1Data.blk_makes;
+        p1SeriesStats.fg_makes += (p1Data.fg2_makes + p1Data.fg3_makes); p1SeriesStats.fg_attempts += (p1Data.fg2_attempts + p1Data.fg3_attempts);
+        p2SeriesStats.pts += p2Data.pts; p2SeriesStats.ast += p2Data.ast_makes; p2SeriesStats.treb += p2Data.treb;
+        p2SeriesStats.stl += p2Data.stl_makes; p2SeriesStats.blk += p2Data.blk_makes;
+        p2SeriesStats.fg_makes += (p2Data.fg2_makes + p2Data.fg3_makes); p2SeriesStats.fg_attempts += (p2Data.fg2_attempts + p2Data.fg3_attempts);
 
-        p1SeriesStats.pts += p1Data.pts;
-        p1SeriesStats.ast += p1Data.ast_makes;
-        p1SeriesStats.treb += p1Data.treb;
-        p1SeriesStats.stl += p1Data.stl_makes;
-        p1SeriesStats.blk += p1Data.blk_makes;
-        p1SeriesStats.fg_makes += (p1Data.fg2_makes + p1Data.fg3_makes);
-        p1SeriesStats.fg_attempts += (p1Data.fg2_attempts + p1Data.fg3_attempts);
-
-        p2SeriesStats.pts += p2Data.pts;
-        p2SeriesStats.ast += p2Data.ast_makes;
-        p2SeriesStats.treb += p2Data.treb;
-        p2SeriesStats.stl += p2Data.stl_makes;
-        p2SeriesStats.blk += p2Data.blk_makes;
-        p2SeriesStats.fg_makes += (p2Data.fg2_makes + p2Data.fg3_makes);
-        p2SeriesStats.fg_attempts += (p2Data.fg2_attempts + p2Data.fg3_attempts);
-
-        if (winnerPrefix === 'p1') p1SeriesWins++;
-        else p2SeriesWins++;
+        if (winnerPrefix === 'p1') p1SeriesWins++; else p2SeriesWins++;
 
         document.getElementById('game-splash-title').innerText = `GAME ${gamesPlayed} FINAL`;
-        
         const p1Profile = document.getElementById('p1-profile').value;
         const p2Profile = document.getElementById('p2-profile').value;
         
@@ -1036,19 +1220,10 @@
         let p1Fgp = (p1Data.fg2_attempts + p1Data.fg3_attempts) > 0 ? Math.round(((p1Data.fg2_makes + p1Data.fg3_makes) / (p1Data.fg2_attempts + p1Data.fg3_attempts)) * 100) : 0;
         let p2Fgp = (p2Data.fg2_attempts + p2Data.fg3_attempts) > 0 ? Math.round(((p2Data.fg2_makes + p2Data.fg3_makes) / (p2Data.fg2_attempts + p2Data.fg3_attempts)) * 100) : 0;
 
-        document.getElementById('game-p1-pts').innerText = p1Data.pts;
-        document.getElementById('game-p1-reb').innerText = p1Data.treb;
-        document.getElementById('game-p1-ast').innerText = p1Data.ast_makes;
-        document.getElementById('game-p1-fgp').innerText = `${p1Fgp}%`;
-        document.getElementById('game-p1-blk').innerText = p1Data.blk_makes;
-        document.getElementById('game-p1-stl').innerText = p1Data.stl_makes;
-
-        document.getElementById('game-p2-pts').innerText = p2Data.pts;
-        document.getElementById('game-p2-reb').innerText = p2Data.treb;
-        document.getElementById('game-p2-ast').innerText = p2Data.ast_makes;
-        document.getElementById('game-p2-fgp').innerText = `${p2Fgp}%`;
-        document.getElementById('game-p2-blk').innerText = p2Data.blk_makes;
-        document.getElementById('game-p2-stl').innerText = p2Data.stl_makes;
+        document.getElementById('game-p1-pts').innerText = p1Data.pts; document.getElementById('game-p1-reb').innerText = p1Data.treb; document.getElementById('game-p1-ast').innerText = p1Data.ast_makes;
+        document.getElementById('game-p1-fgp').innerText = `${p1Fgp}%`; document.getElementById('game-p1-blk').innerText = p1Data.blk_makes; document.getElementById('game-p1-stl').innerText = p1Data.stl_makes;
+        document.getElementById('game-p2-pts').innerText = p2Data.pts; document.getElementById('game-p2-reb').innerText = p2Data.treb; document.getElementById('game-p2-ast').innerText = p2Data.ast_makes;
+        document.getElementById('game-p2-fgp').innerText = `${p2Fgp}%`; document.getElementById('game-p2-blk').innerText = p2Data.blk_makes; document.getElementById('game-p2-stl').innerText = p2Data.stl_makes;
 
         document.getElementById('game-splash-overlay').style.display = 'flex';
     }
@@ -1058,7 +1233,6 @@
         document.getElementById('p1-score').innerText = p1SeriesWins;
         document.getElementById('p2-score').innerText = p2SeriesWins;
         document.getElementById('status-text').innerText = `GAME ${gamesPlayed} COMPLETE!`;
-
         if (p1SeriesWins >= 4 || p2SeriesWins >= 4) {
             let champPrefix = p1SeriesWins >= 4 ? 'p1' : 'p2';
             triggerSeriesEnd(champPrefix === 'p1' ? "PLAYER 1" : "PLAYER 2", champPrefix);
@@ -1073,31 +1247,22 @@
             if (document.getElementById(`p1-${s.id}`).classList.contains('winner-cell')) p1Wins++;
             if (document.getElementById(`p2-${s.id}`).classList.contains('winner-cell')) p2Wins++;
         });
-
-        if (p1Wins === p2Wins) {
-            handleOvertime();
-        } else {
-            let directWinner = p1Wins > p2Wins ? 'p1' : 'p2';
-            finalizeGame(directWinner);
-        }
+        if (p1Wins === p2Wins) handleOvertime(); else finalizeGame(p1Wins > p2Wins ? 'p1' : 'p2');
     }
 
     function rollNext() {
         if (currentStep >= rollSequence.length) return;
-
         if (currentStep === 0) {
             document.getElementById('p1-profile').disabled = true;
             document.getElementById('p2-profile').disabled = true;
             document.getElementById('concede-btn').style.display = "inline-block";
         }
-
         const statToRoll = rollSequence[currentStep];
         const currentRowEl = document.getElementById(`row-${statToRoll}`);
         if (currentRowEl) currentRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         const p1Profile = document.getElementById('p1-profile').value;
         const p2Profile = document.getElementById('p2-profile').value;
-
         const res1 = processRoll('p1', statToRoll, p1Profile);
         const res2 = processRoll('p2', statToRoll, p2Profile);
 
@@ -1111,53 +1276,39 @@
         } else {
             renderCell('p1', statToRoll, res1.makes, res1.isBoost, res1.isReduce);
             renderCell('p2', statToRoll, res2.makes, res2.isBoost, res2.isReduce);
-            let lowerIsBetter = ['to', 'pf'].includes(statToRoll);
-            evaluateWinner(statToRoll, res1.makes, res2.makes, lowerIsBetter);
+            evaluateWinner(statToRoll, res1.makes, res2.makes, ['to', 'pf'].includes(statToRoll));
         }
 
-        calculateDerived(p1Data, p1Profile);
-        calculateDerived(p2Data, p2Profile);
+        calculateDerived(p1Data, p1Profile); calculateDerived(p2Data, p2Profile);
 
         if (statToRoll === 'fg2') {
-            renderCell('p1', 'fg2_pct', `${p1Data.fg2_pct}%`);
-            renderCell('p2', 'fg2_pct', `${p2Data.fg2_pct}%`);
+            renderCell('p1', 'fg2_pct', `${p1Data.fg2_pct}%`); renderCell('p2', 'fg2_pct', `${p2Data.fg2_pct}%`);
             evaluateWinner('fg2_pct', p1Data.fg2_pct, p2Data.fg2_pct);
         }
         if (statToRoll === 'fg3') {
-            renderCell('p1', 'fg3_pct', `${p1Data.fg3_pct}%`);
-            renderCell('p2', 'fg3_pct', `${p2Data.fg3_pct}%`);
+            renderCell('p1', 'fg3_pct', `${p1Data.fg3_pct}%`); renderCell('p2', 'fg3_pct', `${p2Data.fg3_pct}%`);
             evaluateWinner('fg3_pct', p1Data.fg3_pct, p2Data.fg3_pct);
         }
         if (statToRoll === 'ft') {
-            renderCell('p1', 'ft_pct', `${p1Data.ft_pct}%`);
-            renderCell('p2', 'ft_pct', `${p2Data.ft_pct}%`);
+            renderCell('p1', 'ft_pct', `${p1Data.ft_pct}%`); renderCell('p2', 'ft_pct', `${p2Data.ft_pct}%`);
             evaluateWinner('ft_pct', p1Data.ft_pct, p2Data.ft_pct);
-            renderCell('p1', 'pts', p1Data.pts, false, p1Data.pts_isReduce);
-            renderCell('p2', 'pts', p2Data.pts, false, p2Data.pts_isReduce);
+            renderCell('p1', 'pts', p1Data.pts, false, p1Data.pts_isReduce); renderCell('p2', 'pts', p2Data.pts, false, p2Data.pts_isReduce);
             evaluateWinner('pts', p1Data.pts, p2Data.pts);
-            renderCell('p1', 'efg', `${p1Data.efg}%`);
-            renderCell('p2', 'efg', `${p2Data.efg}%`);
+            renderCell('p1', 'efg', `${p1Data.efg}%`); renderCell('p2', 'efg', `${p2Data.efg}%`);
             evaluateWinner('efg', p1Data.efg, p2Data.efg);
         }
-        
         if (statToRoll === 'dreb') {
-            renderCell('p1', 'treb', p1Data.treb, p1Data.treb_isBoost);
-            renderCell('p2', 'treb', p2Data.treb, p2Data.treb_isBoost);
+            renderCell('p1', 'treb', p1Data.treb, p1Data.treb_isBoost); renderCell('p2', 'treb', p2Data.treb, p2Data.treb_isBoost);
             evaluateWinner('treb', p1Data.treb, p2Data.treb);
         }
-
         if (statToRoll === 'to') {
-            renderCell('p1', 'ast_to', p1Data.ast_to_str);
-            renderCell('p2', 'ast_to', p2Data.ast_to_str);
+            renderCell('p1', 'ast_to', p1Data.ast_to_str); renderCell('p2', 'ast_to', p2Data.ast_to_str);
             evaluateWinner('ast_to', p1Data.ast_to_raw, p2Data.ast_to_raw);
         }
 
         currentStep++;
-        
         if (currentStep < rollSequence.length) {
-            const nextId = rollSequence[currentStep];
-            const nextName = statsConfig.find(s => s.id === nextId).name;
-            document.getElementById('status-text').innerText = `Next Roll: ${nextName}`;
+            document.getElementById('status-text').innerText = `Next Roll: ${statsConfig.find(s => s.id === rollSequence[currentStep]).name}`;
         } else {
             document.getElementById('roll-btn').style.display = "none";
             document.getElementById('concede-btn').style.display = "none";
@@ -1166,15 +1317,12 @@
     }
 
     initBoard();
-
-    // 5. EXPOSE FUNCTIONS TO WINDOW FOR INLINE HTML CLICKS
     window.updateProfile = updateProfile;
     window.rollNext = rollNext;
     window.resetMatch = resetMatch;
     window.closeGameSplash = closeGameSplash;
     window.closeOvertimeSplash = closeOvertimeSplash;
     window.showRecapScreen = showRecapScreen;
-
 </script>
 </body>
 </html>
