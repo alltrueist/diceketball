@@ -353,17 +353,27 @@
         /* Basketball Card UI */
         .bball-card {
             background: linear-gradient(135deg, #2a2a2a 0%, #0a0a0a 100%);
-            border: 4px solid var(--highlight-border);
             border-radius: 12px;
             width: 90%;
             max-width: 450px;
-            padding: 20px 10px;
-            box-shadow: 0 0 40px rgba(251, 191, 36, 0.3), inset 0 0 20px rgba(0,0,0,0.8);
+            padding: 30px 15px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
             overflow: hidden;
+            /* Base border color if frame doesn't load */
+            border: 2px solid #555;
+        }
+
+        .card-frame {
+            position: absolute;
+            top: 0; left: 0; 
+            width: 100%; height: 100%;
+            pointer-events: none; /* Lets clicks pass through */
+            z-index: 10;
+            object-fit: fill; 
         }
 
         .card-hologram {
@@ -374,20 +384,34 @@
             z-index: 1;
         }
 
+        .card-tier-badge {
+            background-color: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-family: sans-serif;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            z-index: 2;
+            border: 1px solid #444;
+        }
+
         .card-username {
-            color: var(--highlight-border);
+            color: var(--text-main);
             font-size: clamp(2rem, 6vw, 2.5rem);
-            margin: 0 0 15px 0;
+            margin: 0 0 10px 0;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             z-index: 2;
         }
 
         .card-record {
             font-family: sans-serif;
-            color: var(--text-main);
-            font-size: 1.1rem;
+            color: var(--text-muted);
+            font-size: 1rem;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             z-index: 2;
         }
 
@@ -423,14 +447,14 @@
         }
 
         .card-table tr.career-row {
-            background: rgba(251, 191, 36, 0.15);
+            background: rgba(255, 255, 255, 0.1);
             font-weight: bold;
         }
 
         .card-table tr.career-row td {
-            border-top: 2px solid var(--highlight-border);
+            border-top: 2px solid #555;
             border-bottom: none;
-            color: var(--highlight-border);
+            color: #fff;
         }
 
         /* General Tables */
@@ -505,7 +529,7 @@
             border: 4px solid var(--highlight-border);
             object-fit: cover;
             margin: clamp(15px, 4vw, 25px) 0;
-            box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+            box-shadow: 0 0 20px rgba(0,0,0, 0.8);
             z-index: 2;
         }
 
@@ -604,10 +628,15 @@
 <!-- My Card Splash Screen -->
 <div class="splash-overlay" id="card-overlay" style="z-index: 1500;">
     <div class="bball-card">
+        <!-- The Dynamic Visual Frame -->
+        <img id="card-frame-image" src="" class="card-frame" onerror="this.style.display='none'">
+        
         <div class="card-hologram"></div>
-        <img id="card-avatar" src="" class="champ-avatar" style="margin-top: 10px;" onerror="this.style.display='none'">
+        <div id="card-tier-display" class="card-tier-badge">ROOKIE TIER</div>
+        
+        <img id="card-avatar" src="" class="champ-avatar" style="margin-top: 5px; border-color: #444;" onerror="this.style.display='none'">
         <h2 id="card-username-display" class="card-username">PLAYER</h2>
-        <div id="card-record-display" class="card-record">0 SERIES WINS - 0 SERIES LOSSES</div>
+        <div id="card-record-display" class="card-record">0W - 0L</div>
         
         <div class="card-table-wrapper">
             <table class="card-table">
@@ -626,7 +655,7 @@
                 </tbody>
             </table>
         </div>
-        <button class="btn-action" style="display: block; width: 90%; margin-top: 20px; z-index: 2; padding: 10px;" onclick="closeMyCard()">CLOSE CARD</button>
+        <button class="btn-action" style="display: block; width: 90%; margin-top: 20px; z-index: 20; padding: 10px;" onclick="closeMyCard()">CLOSE CARD</button>
     </div>
 </div>
 
@@ -683,7 +712,7 @@
 <div class="splash-overlay" id="series-splash-overlay">
     <div class="splash-content" id="series-splash-step1">
         <h1 class="splash-title" id="splash-champ">🏆 PLAYER 1 WINS! 🏆</h1>
-        <img id="splash-champ-avatar" src="" alt="Champion" class="champ-avatar">
+        <img id="splash-champ-avatar" src="" alt="Champion" class="champ-avatar" style="border-color: var(--highlight-border);">
         
         <div style="color: var(--text-muted); font-family: sans-serif; font-size: clamp(0.8rem, 2vw, 1rem); text-transform: uppercase;">Final Series Score</div>
         <div class="splash-subtitle" id="splash-series-score" style="font-size: clamp(2rem, 6vw, 3rem); font-weight: bold; color: var(--text-main); margin-bottom: 25px;">4 - 3</div>
@@ -725,12 +754,10 @@
 </script>
 
 <script type="module">
-    // 1. IMPORT FIREBASE SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // 2. CONFIGURE FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyDA-0Pe3N50jLxu2HJDNrAmvCjxIsg_Wts",
       authDomain: "diceketball.firebaseapp.com",
@@ -747,7 +774,6 @@
 
     let currentUser = null;
 
-    // 3. AUTHENTICATION LOGIC
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
@@ -814,8 +840,45 @@
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 
-                document.getElementById('card-username-display').innerText = data.username ? data.username.toUpperCase() : "ROOKIE";
-                document.getElementById('card-record-display').innerText = `${data.seriesWins || 0} SERIES WINS - ${data.seriesLosses || 0} SERIES LOSSES`;
+                document.getElementById('card-username-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
+                
+                // Tier Logic
+                let wins = data.seriesWins || 0;
+                let losses = data.seriesLosses || 0;
+                let totalSeries = wins + losses;
+                document.getElementById('card-record-display').innerText = `${wins}W - ${losses}L`;
+                
+                let winPct = totalSeries > 0 ? (wins / totalSeries) * 100 : 0;
+                let tier = "rookie";
+                let tierName = "ROOKIE";
+                let tierColor = "#888888"; // Gray for Rookie
+
+                if (totalSeries > 0) {
+                    if (winPct >= 70) { 
+                        tier = "mvp"; 
+                        tierName = "MVP"; 
+                        tierColor = "#A855F7"; // Purple for MVP
+                    }
+                    else if (winPct >= 50) { 
+                        tier = "allstar"; 
+                        tierName = "ALL-STAR"; 
+                        tierColor = "#3B82F6"; // Blue for All-Star
+                    }
+                    else if (winPct >= 30) { 
+                        tier = "starter"; 
+                        tierName = "STARTER"; 
+                        tierColor = "#F97316"; // Orange for Starter
+                    }
+                }
+
+                document.getElementById('card-tier-display').innerText = `${tierName} TIER`;
+                document.getElementById('card-tier-display').style.color = tierColor;
+                document.getElementById('card-tier-display').style.borderColor = tierColor;
+                
+                // Dynamically load the custom frame image
+                const frameImg = document.getElementById('card-frame-image');
+                frameImg.src = `frame-${tier}.png`;
+                frameImg.style.display = 'block';
                 
                 // Determine Most Used Avatar
                 let mostUsed = 'none';
@@ -887,7 +950,6 @@
         document.getElementById('card-overlay').style.display = 'none';
     }
 
-    // 4. MAIN GAME LOGIC
     const profiles = {
         playmaker: { img: 'avatar-playmaker.png', desc: 'Boost: AST x2, FT x2<br>Reduce: BLK/2', abbr: 'PMK' },
         sniper: { img: 'avatar-sniper.png', desc: 'Boost: 3PT Extra Roll<br>Reduce: TO x2', abbr: 'SNP' },
@@ -1121,11 +1183,9 @@
                     const data = docSnap.data();
                     let wonSeries = (champPrefix === 'p1');
                     
-                    // Update Archetype Tallies
                     let newCounts = data.archetypeCounts || {};
                     newCounts[p1Profile] = (newCounts[p1Profile] || 0) + 1;
 
-                    // Update Recent Series History
                     let newSeriesObj = {
                         result: wonSeries ? 'W' : 'L',
                         ppg: (p1SeriesStats.pts / gamesPlayed).toFixed(1),
@@ -1134,10 +1194,9 @@
                         fgp: p1Fgp
                     };
                     let newHistory = data.seriesHistory || [];
-                    newHistory.unshift(newSeriesObj); // Add to beginning
-                    if (newHistory.length > 5) newHistory.pop(); // Keep only 5 most recent
+                    newHistory.unshift(newSeriesObj); 
+                    if (newHistory.length > 5) newHistory.pop(); 
 
-                    // Write Everything Back
                     updateDoc(userRef, {
                         seriesWins: increment(wonSeries ? 1 : 0),
                         seriesLosses: increment(wonSeries ? 0 : 1),
