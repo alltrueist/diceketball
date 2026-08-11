@@ -69,10 +69,11 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
+            z-index: 100;
         }
 
         .btn-header {
-            background: none;
+            background: rgba(0,0,0,0.5);
             border: 1px solid #555;
             color: #888;
             padding: 5px 10px;
@@ -83,6 +84,7 @@
             display: none;
             text-transform: uppercase;
             font-weight: bold;
+            backdrop-filter: blur(4px);
         }
 
         .btn-header:hover {
@@ -247,6 +249,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            z-index: 50;
         }
 
         .roll-btn {
@@ -356,19 +359,15 @@
             border-radius: 12px;
             width: 90%;
             max-width: 450px;
-            
-            /* UPDATED FIX: Heavy padding to account for the MVP frame borders */
-            /* Top: 130px, Right: 50px, Bottom: 100px, Left: 50px (Scales on small screens) */
             padding: clamp(100px, 22vw, 130px) clamp(35px, 10vw, 55px) clamp(80px, 18vw, 100px) clamp(35px, 10vw, 55px);
-            
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
             overflow: hidden;
-            border: 2px solid #555; /* Base border color if frame doesn't load */
-            box-sizing: border-box; /* Forces padding inward so the card doesn't stretch outside the screen */
+            border: 2px solid #555;
+            box-sizing: border-box; 
         }
 
         .card-frame {
@@ -420,7 +419,7 @@
         }
 
         .card-table-wrapper {
-            width: 100%; /* Spreads fully within the new inner safe area */
+            width: 100%;
             background: rgba(0,0,0,0.6);
             border-radius: 8px;
             border: 1px solid #444;
@@ -432,7 +431,7 @@
             width: 100%;
             border-collapse: collapse;
             font-family: sans-serif;
-            font-size: clamp(0.7rem, 2vw, 0.9rem); /* Slightly smaller to fit constrained width */
+            font-size: clamp(0.7rem, 2vw, 0.9rem); 
         }
 
         .card-table th {
@@ -459,6 +458,42 @@
             border-top: 2px solid #555;
             border-bottom: none;
             color: #fff;
+        }
+
+        /* Leaderboard UI */
+        .lb-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .lb-tab {
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Impact', sans-serif;
+            font-size: 0.9rem;
+            flex: 1 1 20%;
+            text-align: center;
+        }
+
+        .lb-tab.active {
+            background: var(--highlight-border);
+            color: #000;
+            border-color: var(--highlight-border);
+        }
+
+        .lb-note {
+            font-family: sans-serif;
+            font-size: 0.75rem;
+            color: var(--reduce-color);
+            margin-bottom: 10px;
         }
 
         /* General Tables */
@@ -556,6 +591,7 @@
     <header>
         <img src="logo.png" alt="Diceketball" class="logo" onerror="this.outerHTML='<h1>DICEKETBALL</h1>'">
         <div class="header-controls">
+            <button id="btn-leaderboard" class="btn-header btn-card">Leaderboard</button>
             <button id="btn-my-card" class="btn-header btn-card">My Card</button>
             <button id="btn-logout" class="btn-header">Sign Out</button>
         </div>
@@ -629,15 +665,48 @@
     </div>
 </div>
 
+<!-- Leaderboard Overlay -->
+<div class="splash-overlay" id="leaderboard-overlay" style="z-index: 1500;">
+    <div class="splash-content" style="max-width: 700px;">
+        <h1 class="splash-title" style="margin-bottom: 5px;">LEADERBOARDS</h1>
+        <div class="lb-note">* Minimum 10 games played required</div>
+
+        <div class="lb-tabs" id="lb-tabs">
+            <button class="lb-tab active" data-cat="wins">WINS</button>
+            <button class="lb-tab" data-cat="winPct">WIN %</button>
+            <button class="lb-tab" data-cat="ppg">PPG</button>
+            <button class="lb-tab" data-cat="rpg">RPG</button>
+            <button class="lb-tab" data-cat="apg">APG</button>
+            <button class="lb-tab" data-cat="spg">SPG</button>
+            <button class="lb-tab" data-cat="bpg">BPG</button>
+            <button class="lb-tab" data-cat="fgp">FG%</button>
+        </div>
+
+        <div class="card-table-wrapper" style="width: 100%;">
+            <table class="card-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">RANK</th>
+                        <th style="width: 50%; text-align: left; padding-left: 10px;">USERNAME</th>
+                        <th style="width: 30%;" id="lb-stat-header">WINS</th>
+                    </tr>
+                </thead>
+                <tbody id="lb-table-body">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+        
+        <button class="btn-action" style="display: block; width: 100%; margin-top: 20px;" onclick="closeLeaderboard()">CLOSE</button>
+    </div>
+</div>
+
 <!-- My Card Splash Screen -->
 <div class="splash-overlay" id="card-overlay" style="z-index: 1500;">
     <div class="bball-card">
-        <!-- The Dynamic Visual Frame -->
         <img id="card-frame-image" src="" class="card-frame" onerror="this.style.display='none'">
-        
         <div class="card-hologram"></div>
         <div id="card-tier-display" class="card-tier-badge">ROOKIE TIER</div>
-        
         <img id="card-avatar" src="" class="champ-avatar" style="border-color: #444;" onerror="this.style.display='none'">
         <h2 id="card-username-display" class="card-username">PLAYER</h2>
         <div id="card-record-display" class="card-record">0W - 0L</div>
@@ -667,7 +736,6 @@
 <div class="splash-overlay" id="ot-splash-overlay">
     <div class="splash-content" id="ot-splash-content">
         <h1 class="splash-title" id="ot-title" style="color: var(--reduce-color); text-shadow: 0 0 10px rgba(248, 113, 113, 0.5);">OVERTIME</h1>
-        
         <div style="display: flex; justify-content: space-around; width: 100%; margin: 20px 0; align-items: center;">
             <div style="text-align: center;">
                 <img id="ot-p1-avatar" src="" class="ot-avatar">
@@ -679,7 +747,6 @@
                 <div class="ot-score-text" id="ot-p2-score">0</div>
             </div>
         </div>
-
         <div class="splash-subtitle" id="ot-winner-text" style="color: var(--highlight-border); font-size: clamp(1rem, 3vw, 1.4rem); font-weight: bold; margin-bottom: 0;">PLAYER 1 WINS IN OT!</div>
         <button class="btn-action" style="display: block; width: 100%; margin-top: 20px;" onclick="closeOvertimeSplash()">CONTINUE</button>
     </div>
@@ -690,13 +757,11 @@
     <div class="splash-content">
         <h1 class="splash-title" id="game-splash-title">GAME 1 FINAL</h1>
         <h2 class="splash-subtitle" id="game-splash-winner-text" style="color: var(--boost-color); font-size: clamp(1.2rem, 3.5vw, 1.8rem); margin-bottom: 10px;">PLAYER 1 WINS!</h2>
-
         <div style="display: flex; justify-content: space-around; width: 100%; margin: 15px 0 25px 0; align-items: center;">
             <img id="game-p1-avatar" src="" class="game-splash-avatar">
             <span style="color: var(--text-muted); font-weight: bold; font-size: clamp(1rem, 3vw, 1.5rem);">VS</span>
             <img id="game-p2-avatar" src="" class="game-splash-avatar">
         </div>
-
         <table class="stats-table">
             <tbody>
                 <tr><td id="game-p1-pts">-</td><td class="label-col">PTS</td><td id="game-p2-pts">-</td></tr>
@@ -707,7 +772,6 @@
                 <tr><td id="game-p1-stl">-</td><td class="label-col">STL</td><td id="game-p2-stl">-</td></tr>
             </tbody>
         </table>
-        
         <button class="btn-action" style="display: block; width: 100%;" onclick="closeGameSplash()">CONTINUE</button>
     </div>
 </div>
@@ -717,16 +781,12 @@
     <div class="splash-content" id="series-splash-step1">
         <h1 class="splash-title" id="splash-champ">🏆 PLAYER 1 WINS! 🏆</h1>
         <img id="splash-champ-avatar" src="" alt="Champion" class="champ-avatar" style="border-color: var(--highlight-border);">
-        
         <div style="color: var(--text-muted); font-family: sans-serif; font-size: clamp(0.8rem, 2vw, 1rem); text-transform: uppercase;">Final Series Score</div>
         <div class="splash-subtitle" id="splash-series-score" style="font-size: clamp(2rem, 6vw, 3rem); font-weight: bold; color: var(--text-main); margin-bottom: 25px;">4 - 3</div>
-        
         <button class="btn-action" style="display: block; width: 100%;" onclick="showRecapScreen()">RECAP</button>
     </div>
-
     <div class="splash-content" id="series-splash-step2" style="display: none;">
         <div class="splash-subtitle" style="margin-bottom: 15px; font-size: clamp(1rem, 3vw, 1.4rem); color: var(--text-main);">Series Averages</div>
-
         <table class="stats-table">
             <thead>
                 <tr>
@@ -744,7 +804,6 @@
                 <tr><td id="splash-p1-fgp">-</td><td class="label-col">FG%</td><td id="splash-p2-fgp">-</td></tr>
             </tbody>
         </table>
-
         <button class="btn-action" style="display: block; width: 100%;" onclick="resetMatch(true)">START NEW SERIES</button>
     </div>
 </div>
@@ -760,7 +819,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, updateDoc, increment, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDA-0Pe3N50jLxu2HJDNrAmvCjxIsg_Wts",
@@ -784,11 +843,13 @@
             document.getElementById('auth-overlay').style.display = 'none';
             document.getElementById('btn-logout').style.display = 'block';
             document.getElementById('btn-my-card').style.display = 'block';
+            document.getElementById('btn-leaderboard').style.display = 'block';
         } else {
             currentUser = null;
             document.getElementById('auth-overlay').style.display = 'flex';
             document.getElementById('btn-logout').style.display = 'none';
             document.getElementById('btn-my-card').style.display = 'none';
+            document.getElementById('btn-leaderboard').style.display = 'none';
         }
     });
 
@@ -825,6 +886,8 @@
                 totalSteals: 0,
                 totalFgMakes: 0,
                 totalFgAttempts: 0,
+                total3ptMakes: 0,
+                total3ptAttempts: 0,
                 archetypeCounts: {},
                 seriesHistory: []
             });
@@ -834,6 +897,121 @@
     });
 
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+    // LEADERBOARD LOGIC
+    let cachedLeaderboardData = [];
+    
+    document.getElementById('btn-leaderboard').addEventListener('click', async () => {
+        if (!currentUser) return;
+        document.getElementById('leaderboard-overlay').style.display = 'flex';
+        
+        // Fetch all users once per click to save database reads
+        const querySnapshot = await getDocs(collection(db, "users"));
+        cachedLeaderboardData = querySnapshot.docs.map(doc => doc.data());
+        
+        // Trigger initial render for Wins
+        renderLeaderboard('wins');
+    });
+
+    function renderLeaderboard(category) {
+        // Filter minimum 10 games
+        const eligibleUsers = cachedLeaderboardData.filter(u => (u.totalGamesPlayed || 0) >= 10);
+        
+        let list = eligibleUsers.map(u => {
+            let val = 0;
+            let displayStr = "";
+            let games = u.totalGamesPlayed || 0;
+            let series = (u.seriesWins || 0) + (u.seriesLosses || 0);
+            
+            switch(category) {
+                case 'wins': 
+                    val = u.seriesWins || 0; 
+                    displayStr = val; 
+                    document.getElementById('lb-stat-header').innerText = "WINS";
+                    break;
+                case 'winPct': 
+                    val = series > 0 ? (u.seriesWins / series) * 100 : 0; 
+                    displayStr = `${val.toFixed(1)}%`; 
+                    document.getElementById('lb-stat-header').innerText = "WIN %";
+                    break;
+                case 'ppg': 
+                    val = games > 0 ? u.totalPoints / games : 0; 
+                    displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "PPG";
+                    break;
+                case 'rpg': 
+                    val = games > 0 ? u.totalRebounds / games : 0; 
+                    displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "RPG";
+                    break;
+                case 'apg': 
+                    val = games > 0 ? u.totalAssists / games : 0; 
+                    displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "APG";
+                    break;
+                case 'spg': 
+                    val = games > 0 ? u.totalSteals / games : 0; 
+                    displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "SPG";
+                    break;
+                case 'bpg': 
+                    val = games > 0 ? u.totalBlocks / games : 0; 
+                    displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "BPG";
+                    break;
+                case 'fgp': 
+                    let fga = u.totalFgAttempts || 0;
+                    let fgm = u.totalFgMakes || 0;
+                    let tpa = u.total3ptAttempts || 0;
+                    let tpm = u.total3ptMakes || 0;
+                    val = fga > 0 ? (fgm / fga) * 100 : 0;
+                    let tpPct = tpa > 0 ? (tpm / tpa) * 100 : 0;
+                    displayStr = `<b>${val.toFixed(1)}%</b> <span style="font-size:0.75rem; color:var(--text-muted);">(3PT: ${tpPct.toFixed(1)}%)</span>`;
+                    document.getElementById('lb-stat-header').innerText = "FG% (3PT%)";
+                    break;
+            }
+            return { username: u.username || 'PLAYER', val: val, displayStr: displayStr };
+        });
+
+        // Sort descending and slice Top 10
+        list.sort((a, b) => b.val - a.val);
+        list = list.slice(0, 10);
+
+        const tbody = document.getElementById('lb-table-body');
+        tbody.innerHTML = '';
+        
+        if (list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="padding: 20px; color: var(--text-muted);">No players have played 10 games yet!</td></tr>`;
+            return;
+        }
+
+        list.forEach((item, index) => {
+            let rankColor = index === 0 ? "var(--highlight-border)" : (index === 1 ? "#C0C0C0" : (index === 2 ? "#CD7F32" : "var(--text-main)"));
+            tbody.innerHTML += `
+                <tr>
+                    <td style="color: ${rankColor}; font-weight: bold; font-size: 1.2rem;">${index + 1}</td>
+                    <td style="text-align: left; padding-left: 10px; font-weight: bold; text-transform: uppercase;">${item.username}</td>
+                    <td style="color: var(--boost-color);">${item.displayStr}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Tab Event Listeners
+    document.querySelectorAll('.lb-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
+            e.target.classList.add('active');
+            renderLeaderboard(e.target.getAttribute('data-cat'));
+        });
+    });
+
+    window.closeLeaderboard = function() {
+        document.getElementById('leaderboard-overlay').style.display = 'none';
+        // Reset to first tab for next open
+        document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('.lb-tab[data-cat="wins"]').classList.add('active');
+    }
 
     // BASKETBALL CARD LOGIC
     document.getElementById('btn-my-card').addEventListener('click', () => {
@@ -846,7 +1024,6 @@
                 
                 document.getElementById('card-username-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
                 
-                // Tier Logic
                 let wins = data.seriesWins || 0;
                 let losses = data.seriesLosses || 0;
                 let totalSeries = wins + losses;
@@ -855,36 +1032,22 @@
                 let winPct = totalSeries > 0 ? (wins / totalSeries) * 100 : 0;
                 let tier = "rookie";
                 let tierName = "ROOKIE";
-                let tierColor = "#888888"; // Gray for Rookie
+                let tierColor = "#888888"; 
 
                 if (totalSeries > 0) {
-                    if (winPct >= 70) { 
-                        tier = "mvp"; 
-                        tierName = "MVP"; 
-                        tierColor = "#A855F7"; // Purple for MVP
-                    }
-                    else if (winPct >= 50) { 
-                        tier = "allstar"; 
-                        tierName = "ALL-STAR"; 
-                        tierColor = "#3B82F6"; // Blue for All-Star
-                    }
-                    else if (winPct >= 30) { 
-                        tier = "starter"; 
-                        tierName = "STARTER"; 
-                        tierColor = "#F97316"; // Orange for Starter
-                    }
+                    if (winPct >= 70) { tier = "mvp"; tierName = "MVP"; tierColor = "#A855F7"; }
+                    else if (winPct >= 50) { tier = "allstar"; tierName = "ALL-STAR"; tierColor = "#3B82F6"; }
+                    else if (winPct >= 30) { tier = "starter"; tierName = "STARTER"; tierColor = "#F97316"; }
                 }
 
                 document.getElementById('card-tier-display').innerText = `${tierName} TIER`;
                 document.getElementById('card-tier-display').style.color = tierColor;
                 document.getElementById('card-tier-display').style.borderColor = tierColor;
                 
-                // Dynamically load the custom frame image
                 const frameImg = document.getElementById('card-frame-image');
-                frameImg.src = `frame-${tier}.png`; // or .jpg if using jpgs
+                frameImg.src = `frame-${tier}.png`; 
                 frameImg.style.display = 'block';
                 
-                // Determine Most Used Avatar
                 let mostUsed = 'none';
                 let maxCount = 0;
                 if (data.archetypeCounts) {
@@ -903,7 +1066,6 @@
                     avatarEl.style.display = 'none';
                 }
 
-                // Populate Series History
                 const tbody = document.getElementById('card-table-body');
                 tbody.innerHTML = '';
                 const history = data.seriesHistory || [];
@@ -922,12 +1084,10 @@
                     `;
                 });
 
-                // Fill empty rows if less than 5 series played
                 for(let i = history.length; i < 5; i++) {
                     tbody.innerHTML += `<tr><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`;
                 }
 
-                // Career Averages Row
                 let games = data.totalGamesPlayed || 0;
                 let cPpg = games > 0 ? (data.totalPoints / games).toFixed(1) : "0.0";
                 let cRpg = games > 0 ? (data.totalRebounds / games).toFixed(1) : "0.0";
@@ -944,7 +1104,6 @@
                         <td>${cFgp}%</td>
                     </tr>
                 `;
-
                 document.getElementById('card-overlay').style.display = 'flex';
             }
         });
@@ -988,8 +1147,10 @@
     let p1Data = {}, p2Data = {};
     let p1SeriesWins = 0, p2SeriesWins = 0;
     let gamesPlayed = 0;
-    let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
-    let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
+    
+    // UPDATED: Added fg3_makes and fg3_attempts arrays for accumulation
+    let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
+    let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
     let pendingGameWinner = '';
 
     function initBoard() {
@@ -1041,16 +1202,15 @@
         document.getElementById('next-game-btn').style.display = "none";
 
         if (isNewSeries) {
-            p1SeriesWins = 0;
-            p2SeriesWins = 0;
+            p1SeriesWins = 0; p2SeriesWins = 0;
             document.getElementById('p1-score').innerText = p1SeriesWins;
             document.getElementById('p2-score').innerText = p2SeriesWins;
             document.getElementById('p1-name').innerText = 'P1';
             document.getElementById('p2-name').innerText = 'P2';
 
             gamesPlayed = 0;
-            p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
-            p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0 };
+            p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
+            p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
 
             document.getElementById('series-splash-overlay').style.display = 'none';
             document.getElementById('p1-profile').value = 'none';
@@ -1201,6 +1361,7 @@
                     newHistory.unshift(newSeriesObj); 
                     if (newHistory.length > 5) newHistory.pop(); 
 
+                    // UPDATED: Now pushing 3PT stats to Firebase!
                     updateDoc(userRef, {
                         seriesWins: increment(wonSeries ? 1 : 0),
                         seriesLosses: increment(wonSeries ? 0 : 1),
@@ -1212,6 +1373,8 @@
                         totalSteals: increment(p1SeriesStats.stl),
                         totalFgMakes: increment(p1SeriesStats.fg_makes),
                         totalFgAttempts: increment(p1SeriesStats.fg_attempts),
+                        total3ptMakes: increment(p1SeriesStats.fg3_makes),
+                        total3ptAttempts: increment(p1SeriesStats.fg3_attempts),
                         archetypeCounts: newCounts,
                         seriesHistory: newHistory
                     }).catch(err => console.error("Error saving stats: ", err));
@@ -1261,12 +1424,17 @@
 
     function finalizeGame(winnerPrefix) {
         gamesPlayed++;
+        
+        // UPDATED: Now locally accumulating 3PT stats before series end
         p1SeriesStats.pts += p1Data.pts; p1SeriesStats.ast += p1Data.ast_makes; p1SeriesStats.treb += p1Data.treb;
         p1SeriesStats.stl += p1Data.stl_makes; p1SeriesStats.blk += p1Data.blk_makes;
         p1SeriesStats.fg_makes += (p1Data.fg2_makes + p1Data.fg3_makes); p1SeriesStats.fg_attempts += (p1Data.fg2_attempts + p1Data.fg3_attempts);
+        p1SeriesStats.fg3_makes += p1Data.fg3_makes; p1SeriesStats.fg3_attempts += p1Data.fg3_attempts;
+        
         p2SeriesStats.pts += p2Data.pts; p2SeriesStats.ast += p2Data.ast_makes; p2SeriesStats.treb += p2Data.treb;
         p2SeriesStats.stl += p2Data.stl_makes; p2SeriesStats.blk += p2Data.blk_makes;
         p2SeriesStats.fg_makes += (p2Data.fg2_makes + p2Data.fg3_makes); p2SeriesStats.fg_attempts += (p2Data.fg2_attempts + p2Data.fg3_attempts);
+        p2SeriesStats.fg3_makes += p2Data.fg3_makes; p2SeriesStats.fg3_attempts += p2Data.fg3_attempts;
 
         if (winnerPrefix === 'p1') p1SeriesWins++; else p2SeriesWins++;
 
@@ -1386,6 +1554,8 @@
     window.closeGameSplash = closeGameSplash;
     window.closeOvertimeSplash = closeOvertimeSplash;
     window.showRecapScreen = showRecapScreen;
+    window.closeLeaderboard = closeLeaderboard;
+    window.closeMyCard = closeMyCard;
 </script>
 </body>
 </html>
