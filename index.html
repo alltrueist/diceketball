@@ -1309,7 +1309,6 @@
                     avatarEl.style.display = 'none';
                 }
 
-                // NEW TROPHY GRID ENGINE
                 let badges = data.achievements || {};
                 if (Array.isArray(badges)) {
                     let migrated = {};
@@ -1317,6 +1316,7 @@
                     badges = migrated;
                 }
 
+                // CHANGED: Dime Dropper is now Money Bag (💰) and Interceptor is now Scissors (✂️) for max compatibility!
                 const badgeDefs = [
                     { id: 'tipoff', emoji: '🏀', desc: 'Tip-Off: Complete your first series', oneTime: true },
                     { id: 'sweep', emoji: '🧹', desc: 'The Sweep: Win a series with a flawless 4-0 record' },
@@ -1330,11 +1330,11 @@
                     { id: 'lockdown', emoji: '🔒', desc: 'Lockdown: Hold opponent under 35% FG in a series' },
                     { id: 'chamberlain', emoji: '💯', desc: 'The Chamberlain: Score 40+ points in a single game' },
                     { id: 'worm', emoji: '🐛', desc: 'The Worm: Grab 20+ rebounds in a single game' },
-                    { id: 'dimedropper', emoji: '🪙', desc: 'Dime Dropper: Dish out 15+ assists in a single game' },
+                    { id: 'dimedropper', emoji: '💰', desc: 'Dime Dropper: Dish out 15+ assists in a single game' },
                     { id: 'notinmyhouse', emoji: '☝️', desc: 'Not In My House: Record 10+ blocks in a single game' },
                     { id: 'tripledouble', emoji: '🌟', desc: 'Triple-Double: Double digits in 3 stat categories in a game' },
                     { id: 'fivebyfive', emoji: '🖐️', desc: 'The 5x5 Club: 5+ PTS, REB, AST, BLK, STL in a single game' },
-                    { id: 'slayer_playmaker', emoji: '🥷', desc: 'Interceptor: Defeat a Playmaker' },
+                    { id: 'slayer_playmaker', emoji: '✂️', desc: 'Interceptor: Defeat a Playmaker' },
                     { id: 'slayer_sniper', emoji: '🧤', desc: 'Hand in the Face: Defeat a Sniper' },
                     { id: 'slayer_defender', emoji: '🌪️', desc: 'Ankle Breaker: Defeat a Defender' },
                     { id: 'slayer_dunker', emoji: '🚧', desc: 'Stuffed: Defeat a Dunker' },
@@ -1359,7 +1359,6 @@
                 badgesHtml += '</div>';
                 document.getElementById('card-trophies-container').innerHTML = badgesHtml;
 
-                // HISTORY TABLE WITH CAREER HIGHS
                 const tbody = document.getElementById('card-table-body');
                 tbody.innerHTML = '';
                 const history = data.seriesHistory || [];
@@ -1399,7 +1398,6 @@
                     </tr>
                 `;
 
-                // Career Highs Display
                 let cHighs = data.careerHighs || { pts: 0, reb: 0, ast: 0, blk: 0, stl: 0 };
                 tbody.innerHTML += `
                     <tr>
@@ -1409,7 +1407,6 @@
                     </tr>
                 `;
 
-                // MATCHUPS TABLE
                 let matchupsHtml = `<table class="card-table">
                     <thead><tr><th style="text-align:left; padding-left:10px;">OPPONENT</th><th>W</th><th>L</th><th>WIN %</th></tr></thead>
                     <tbody>`;
@@ -1431,7 +1428,6 @@
                 matchupsHtml += `</tbody></table>`;
                 document.getElementById('card-matchups-container').innerHTML = matchupsHtml;
 
-                // Reset to History tab on open
                 switchCardTab('history');
                 
                 document.getElementById('card-overlay').style.display = 'flex';
@@ -1482,7 +1478,6 @@
     let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
     let pendingGameWinner = '';
 
-    // Track Single Game Highs and Badges during a series
     let p1SingleGameBadges = [];
     let p1SeriesHighs = { pts: 0, reb: 0, ast: 0, blk: 0, stl: 0 };
 
@@ -1569,7 +1564,6 @@
             p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
             p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
 
-            // Reset local badge and high trackers
             p1SingleGameBadges = [];
             p1SeriesHighs = { pts: 0, reb: 0, ast: 0, blk: 0, stl: 0 };
 
@@ -1761,7 +1755,6 @@
 
                     if (!currentBadges['tipoff']) currentBadges['tipoff'] = 1;
 
-                    // Add our Single Game Badges we accumulated this series
                     p1SingleGameBadges.forEach(b => {
                         currentBadges[b] = (currentBadges[b] || 0) + 1;
                     });
@@ -1791,7 +1784,6 @@
                         if (!currentBadges['dynasty']) currentBadges['dynasty'] = 1;
                     }
 
-                    // Save Career Highs
                     let cHighs = data.careerHighs || { pts: 0, reb: 0, ast: 0, blk: 0, stl: 0 };
                     let newHighs = {
                         pts: Math.max(cHighs.pts || 0, p1SeriesHighs.pts),
@@ -1875,21 +1867,18 @@
         playSound('sfx-buzzer');
         triggerVibration([100, 50, 100]);
 
-        // Evaluate Single Game Badges and Career Highs for Player 1
         let p1GamePts = p1Data.pts || 0;
         let p1GameReb = p1Data.treb || 0;
         let p1GameAst = p1Data.ast_makes || 0;
         let p1GameBlk = p1Data.blk_makes || 0;
         let p1GameStl = p1Data.stl_makes || 0;
 
-        // Track Highs
         if (p1GamePts > p1SeriesHighs.pts) p1SeriesHighs.pts = p1GamePts;
         if (p1GameReb > p1SeriesHighs.reb) p1SeriesHighs.reb = p1GameReb;
         if (p1GameAst > p1SeriesHighs.ast) p1SeriesHighs.ast = p1GameAst;
         if (p1GameBlk > p1SeriesHighs.blk) p1SeriesHighs.blk = p1GameBlk;
         if (p1GameStl > p1SeriesHighs.stl) p1SeriesHighs.stl = p1GameStl;
 
-        // Evaluate Counting Badges
         if (p1GamePts >= 40) p1SingleGameBadges.push('chamberlain');
         if (p1GameReb >= 20) p1SingleGameBadges.push('worm');
         if (p1GameAst >= 15) p1SingleGameBadges.push('dimedropper');
