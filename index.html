@@ -158,6 +158,7 @@
         select:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            color: var(--text-muted);
         }
 
         .traits {
@@ -647,6 +648,13 @@
         <img src="vs-badge.png" alt="VS" class="vs-badge" onerror="this.outerHTML='<h2 style=\'margin:0;\'>VS</h2>'">
 
         <div class="player-card">
+            <!-- NEW: CPU Toggle UI -->
+            <div style="width: 100%; text-align: center; margin-bottom: 5px;">
+                <label style="font-family: sans-serif; font-size: 0.85rem; color: var(--highlight-border); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="cpu-toggle" checked onchange="toggleCPU()"> vs RANDOM CPU
+                </label>
+            </div>
+
             <img id="p2-avatar" src="" alt="?" class="avatar" onerror="this.style.display='none'">
             <select id="p2-profile" onchange="updateProfile('p2')">
                 <option value="none" selected disabled>Select Archetype...</option>
@@ -746,7 +754,7 @@
     </div>
 </div>
 
-<!-- Public/Private Card Splash Screen (Higher z-index to pop over leaderboard) -->
+<!-- Public/Private Card Splash Screen -->
 <div class="splash-overlay" id="card-overlay" style="z-index: 1600;">
     <div class="bball-card">
         <img id="card-frame-image" src="" class="card-frame" onerror="this.style.display='none'">
@@ -757,7 +765,6 @@
         <h2 id="card-username-display" class="card-username">PLAYER</h2>
         <div id="card-record-display" class="card-record">0W - 0L</div>
         
-        <!-- Badges Container -->
         <div class="card-badges" id="card-badges-display">
             <!-- Populated by JS -->
         </div>
@@ -913,7 +920,6 @@
             updated = true;
         }
 
-        // Global stats checks
         if ((data.totalGamesPlayed || 0) > 0 && !badges['tipoff']) { badges['tipoff'] = 1; updated = true; }
         
         let wins = data.seriesWins || 0;
@@ -922,7 +928,6 @@
         let winPct = totalSeries > 0 ? (wins / totalSeries) * 100 : 0;
         if (totalSeries >= 10 && winPct >= 70 && !badges['dynasty']) { badges['dynasty'] = 1; updated = true; }
 
-        // History array checks (only retroactively awards x1 if missing)
         if (data.seriesHistory && Array.isArray(data.seriesHistory)) {
             data.seriesHistory.forEach(s => {
                 if (parseFloat(s.ppg) >= 20.0 && !badges['carryjob']) { badges['carryjob'] = 1; updated = true; }
@@ -1241,7 +1246,6 @@
                 avatarEl.style.display = 'none';
             }
 
-            // Upgraded Badges Engine display
             let badges = data.achievements || {};
             if (Array.isArray(badges)) {
                 let migrated = {};
@@ -1359,6 +1363,29 @@
     let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
     let pendingGameWinner = '';
 
+    // NEW CPU TOGGLE FUNCTION
+    window.toggleCPU = function() {
+        const isCpu = document.getElementById('cpu-toggle').checked;
+        const p2Select = document.getElementById('p2-profile');
+        
+        if (isCpu) {
+            p2Select.value = 'none';
+            p2Select.disabled = true;
+            p2Select.options[0].text = "Random CPU (Hidden)";
+            document.getElementById('p2-avatar').style.display = 'none';
+            document.getElementById('p2-traits').innerHTML = "Archetype revealed at Tip-Off!";
+            document.getElementById('p2-name').innerText = "CPU";
+        } else {
+            p2Select.disabled = false;
+            p2Select.options[0].text = "Select Archetype...";
+            p2Select.value = 'none';
+            document.getElementById('p2-avatar').style.display = 'none';
+            document.getElementById('p2-traits').innerHTML = "Select an archetype to view traits.";
+            document.getElementById('p2-name').innerText = "P2";
+        }
+        checkReadyStatus();
+    }
+
     function initBoard() {
         const board = document.getElementById('box-score');
         board.innerHTML = '';
@@ -1376,8 +1403,10 @@
     function checkReadyStatus() {
         const p1 = document.getElementById('p1-profile').value;
         const p2 = document.getElementById('p2-profile').value;
+        const isCpu = document.getElementById('cpu-toggle').checked;
         const rollBtn = document.getElementById('roll-btn');
-        if (p1 !== 'none' && p2 !== 'none' && currentStep === 0) {
+        
+        if (p1 !== 'none' && (p2 !== 'none' || isCpu) && currentStep === 0) {
             rollBtn.disabled = false;
             document.getElementById('status-text').innerText = "Ready for Tip Off! Click Roll to Start.";
         } else {
@@ -1420,13 +1449,13 @@
 
             document.getElementById('series-splash-overlay').style.display = 'none';
             document.getElementById('p1-profile').value = 'none';
-            document.getElementById('p2-profile').value = 'none';
             document.getElementById('p1-profile').disabled = false;
-            document.getElementById('p2-profile').disabled = false;
             document.getElementById('p1-avatar').style.display = 'none';
-            document.getElementById('p2-avatar').style.display = 'none';
             document.getElementById('p1-traits').innerHTML = "Select an archetype to view traits.";
-            document.getElementById('p2-traits').innerHTML = "Select an archetype to view traits.";
+            
+            // Re-apply CPU logic if checked
+            toggleCPU();
+
             document.getElementById('status-text').innerText = "Waiting for Players to select archetypes...";
             document.getElementById('roll-btn').disabled = true;
         } else {
@@ -1567,7 +1596,6 @@
 
                     let tpPct = p1SeriesStats.fg3_attempts > 0 ? (p1SeriesStats.fg3_makes / p1SeriesStats.fg3_attempts) * 100 : 0;
                     
-                    // UPDATED: Massive History Object Upgrade
                     let newSeriesObj = {
                         result: wonSeries ? 'W' : 'L',
                         seriesScore: `${p1SeriesWins}-${p2SeriesWins}`,
@@ -1585,7 +1613,6 @@
                     newHistory.unshift(newSeriesObj); 
                     if (newHistory.length > 5) newHistory.pop(); 
 
-                    // Badges Engine
                     let newStreak = wonSeries ? (data.currentStreak || 0) + 1 : 0;
                     
                     let currentBadges = data.achievements || {};
@@ -1604,12 +1631,10 @@
                     
                     if (p1SeriesStats.otWins > 0) currentBadges['ice'] = (currentBadges['ice'] || 0) + p1SeriesStats.otWins;
                     if (tpPct >= 50 && p1SeriesStats.fg3_attempts > 0) currentBadges['sharpshooter'] = (currentBadges['sharpshooter'] || 0) + 1;
-                    
                     if (parseFloat(p1Bpg) >= 3.0) currentBadges['brickwall'] = (currentBadges['brickwall'] || 0) + 1;
                     if (parseFloat(p1Apg) >= 5.0) currentBadges['floorgeneral'] = (currentBadges['floorgeneral'] || 0) + 1;
                     if (parseFloat(p1Rpg) >= 10.0) currentBadges['glasscleaner'] = (currentBadges['glasscleaner'] || 0) + 1;
                     if (parseFloat(p1Ppg) >= 20.0) currentBadges['carryjob'] = (currentBadges['carryjob'] || 0) + 1;
-                    
                     if (p2FgpRaw < 35 && p2SeriesStats.fg_attempts > 0) currentBadges['lockdown'] = (currentBadges['lockdown'] || 0) + 1;
 
                     let projectedWins = (data.seriesWins || 0) + (wonSeries ? 1 : 0);
@@ -1747,11 +1772,23 @@
 
     function rollNext() {
         if (currentStep >= rollSequence.length) return;
+        
         if (currentStep === 0) {
             document.getElementById('p1-profile').disabled = true;
+            
+            // NEW: Instantly pick random CPU archetype on the first roll
+            const isCpu = document.getElementById('cpu-toggle').checked;
+            if (isCpu && document.getElementById('p2-profile').value === 'none') {
+                const archs = Object.keys(profiles);
+                const randomArch = archs[Math.floor(Math.random() * archs.length)];
+                document.getElementById('p2-profile').value = randomArch;
+                updateProfile('p2');
+            }
+            
             document.getElementById('p2-profile').disabled = true;
             document.getElementById('concede-btn').style.display = "inline-block";
         }
+        
         const statToRoll = rollSequence[currentStep];
         const currentRowEl = document.getElementById(`row-${statToRoll}`);
         if (currentRowEl) currentRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1811,7 +1848,11 @@
         }
     }
 
+    // Initialize layout properly on load
     initBoard();
+    toggleCPU();
+    
+    // Bind functions to window
     window.updateProfile = updateProfile;
     window.rollNext = rollNext;
     window.resetMatch = resetMatch;
