@@ -87,6 +87,12 @@
             backdrop-filter: blur(4px);
         }
 
+        /* Show the mute button at all times */
+        #btn-mute {
+            display: block;
+            font-size: 1rem;
+        }
+
         .btn-header:hover {
             color: var(--text-main);
             border-color: var(--text-main);
@@ -619,6 +625,8 @@
     <header>
         <img src="logo.png" alt="Diceketball" class="logo" onerror="this.outerHTML='<h1>DICEKETBALL</h1>'">
         <div class="header-controls">
+            <!-- AUDIO TOGGLE BUTTON -->
+            <button id="btn-mute" class="btn-header">🔊</button>
             <button id="btn-leaderboard" class="btn-header btn-card">Leaderboard</button>
             <button id="btn-my-card" class="btn-header btn-card">My Card</button>
             <button id="btn-account" class="btn-header">Account</button>
@@ -648,7 +656,6 @@
         <img src="vs-badge.png" alt="VS" class="vs-badge" onerror="this.outerHTML='<h2 style=\'margin:0;\'>VS</h2>'">
 
         <div class="player-card">
-            <!-- NEW: CPU Toggle UI -->
             <div style="width: 100%; text-align: center; margin-bottom: 5px;">
                 <label style="font-family: sans-serif; font-size: 0.85rem; color: var(--highlight-border); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
                     <input type="checkbox" id="cpu-toggle" checked onchange="toggleCPU()"> vs RANDOM CPU
@@ -894,6 +901,40 @@
     const db = getFirestore(app);
 
     let currentUser = null;
+
+    // AUDIO & HAPTICS ENGINE
+    let soundEnabled = true;
+    
+    // You will need to download and add these 3 files to your folder!
+    const sfxRoll = new Audio('sfx-roll.mp3');
+    const sfxBuzzer = new Audio('sfx-buzzer.mp3');
+    const sfxCheer = new Audio('sfx-cheer.mp3');
+
+    // Preload audio so it fires instantly
+    sfxRoll.load();
+    sfxBuzzer.load();
+    sfxCheer.load();
+
+    document.getElementById('btn-mute').addEventListener('click', (e) => {
+        soundEnabled = !soundEnabled;
+        e.target.innerText = soundEnabled ? '🔊' : '🔇';
+    });
+
+    function playSound(audioObj) {
+        if (soundEnabled) {
+            audioObj.currentTime = 0;
+            // .catch() prevents the browser from crashing if it blocks autoplay
+            audioObj.play().catch(e => console.log("Audio prevented by browser policies."));
+        }
+    }
+
+    function triggerVibration(pattern) {
+        // navigator.vibrate is widely supported on Android, less reliable on iOS Safari
+        if (soundEnabled && navigator.vibrate) {
+            navigator.vibrate(pattern);
+        }
+    }
+
 
     const profiles = {
         playmaker: { img: 'avatar-playmaker.png', desc: 'Boost: AST x2, FT x2<br>Reduce: BLK/2', abbr: 'PMK' },
@@ -1363,7 +1404,6 @@
     let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
     let pendingGameWinner = '';
 
-    // NEW CPU TOGGLE FUNCTION
     window.toggleCPU = function() {
         const isCpu = document.getElementById('cpu-toggle').checked;
         const p2Select = document.getElementById('p2-profile');
@@ -1453,7 +1493,6 @@
             document.getElementById('p1-avatar').style.display = 'none';
             document.getElementById('p1-traits').innerHTML = "Select an archetype to view traits.";
             
-            // Re-apply CPU logic if checked
             toggleCPU();
 
             document.getElementById('status-text').innerText = "Waiting for Players to select archetypes...";
@@ -1543,6 +1582,10 @@
     }
 
     function triggerSeriesEnd(champName, champPrefix) {
+        // HAPTICS & AUDIO (Massive Series Win)
+        playSound(sfxCheer);
+        triggerVibration([200, 100, 200, 100, 400]);
+
         const p1Profile = document.getElementById('p1-profile').value;
         const p2Profile = document.getElementById('p2-profile').value;
         
@@ -1715,6 +1758,10 @@
     function finalizeGame(winnerPrefix) {
         gamesPlayed++;
         
+        // HAPTICS & AUDIO (Game Final Buzzer)
+        playSound(sfxBuzzer);
+        triggerVibration([100, 50, 100]);
+
         p1SeriesStats.pts += p1Data.pts; p1SeriesStats.ast += p1Data.ast_makes; p1SeriesStats.treb += p1Data.treb;
         p1SeriesStats.stl += p1Data.stl_makes; p1SeriesStats.blk += p1Data.blk_makes;
         p1SeriesStats.fg_makes += (p1Data.fg2_makes + p1Data.fg3_makes); p1SeriesStats.fg_attempts += (p1Data.fg2_attempts + p1Data.fg3_attempts);
@@ -1773,10 +1820,13 @@
     function rollNext() {
         if (currentStep >= rollSequence.length) return;
         
+        // HAPTICS & AUDIO (Rolling the Dice)
+        playSound(sfxRoll);
+        triggerVibration(50);
+        
         if (currentStep === 0) {
             document.getElementById('p1-profile').disabled = true;
             
-            // NEW: Instantly pick random CPU archetype on the first roll
             const isCpu = document.getElementById('cpu-toggle').checked;
             if (isCpu && document.getElementById('p2-profile').value === 'none') {
                 const archs = Object.keys(profiles);
@@ -1848,11 +1898,9 @@
         }
     }
 
-    // Initialize layout properly on load
     initBoard();
     toggleCPU();
     
-    // Bind functions to window
     window.updateProfile = updateProfile;
     window.rollNext = rollNext;
     window.resetMatch = resetMatch;
