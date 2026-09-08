@@ -425,12 +425,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-wrap: wrap; /* Allows multiple rows if you unlock them all! */
+            flex-wrap: wrap; 
             gap: 12px;
             margin-bottom: 15px;
             z-index: 2;
             width: 100%;
-            min-height: 35px;
+            min-height: 35px; 
         }
 
         .badge-icon {
@@ -897,6 +897,45 @@
         stretch5: { img: 'avatar-stretch5.png', desc: 'Boost: 3PT Extra Roll<br>Reduce: OREB/2', abbr: 'ST5' }
     };
 
+    async function runRetroactiveBadgeCheck(uid) {
+        const userRef = doc(db, "users", uid);
+        const docSnap = await getDoc(userRef);
+        if (!docSnap.exists()) return;
+        
+        let data = docSnap.data();
+        let badges = data.achievements || {};
+        let updated = false;
+
+        if (Array.isArray(badges)) {
+            let migrated = {};
+            badges.forEach(b => migrated[b] = 1);
+            badges = migrated;
+            updated = true;
+        }
+
+        // Global stats checks
+        if ((data.totalGamesPlayed || 0) > 0 && !badges['tipoff']) { badges['tipoff'] = 1; updated = true; }
+        
+        let wins = data.seriesWins || 0;
+        let losses = data.seriesLosses || 0;
+        let totalSeries = wins + losses;
+        let winPct = totalSeries > 0 ? (wins / totalSeries) * 100 : 0;
+        if (totalSeries >= 10 && winPct >= 70 && !badges['dynasty']) { badges['dynasty'] = 1; updated = true; }
+
+        // History array checks (only retroactively awards x1 if missing)
+        if (data.seriesHistory && Array.isArray(data.seriesHistory)) {
+            data.seriesHistory.forEach(s => {
+                if (parseFloat(s.ppg) >= 20.0 && !badges['carryjob']) { badges['carryjob'] = 1; updated = true; }
+                if (parseFloat(s.rpg) >= 10.0 && !badges['glasscleaner']) { badges['glasscleaner'] = 1; updated = true; }
+                if (parseFloat(s.apg) >= 5.0 && !badges['floorgeneral']) { badges['floorgeneral'] = 1; updated = true; }
+            });
+        }
+
+        if (updated) {
+            await updateDoc(userRef, { achievements: badges }).catch(e => console.error(e));
+        }
+    }
+
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
@@ -905,6 +944,7 @@
             document.getElementById('btn-account').style.display = 'block';
             document.getElementById('btn-my-card').style.display = 'block';
             document.getElementById('btn-leaderboard').style.display = 'block';
+            runRetroactiveBadgeCheck(user.uid);
         } else {
             currentUser = null;
             document.getElementById('auth-overlay').style.display = 'flex';
@@ -964,7 +1004,7 @@
                 total3ptMakes: 0,
                 total3ptAttempts: 0,
                 currentStreak: 0,
-                achievements: {}, // Upgraded to Object Map
+                achievements: {}, 
                 archetypeCounts: {},
                 seriesHistory: []
             });
@@ -1201,9 +1241,8 @@
                 avatarEl.style.display = 'none';
             }
 
-            // Upgraded Badges Engine
+            // Upgraded Badges Engine display
             let badges = data.achievements || {};
-            // Migration check: if player has old array format, safely upgrade it locally for display
             if (Array.isArray(badges)) {
                 let migrated = {};
                 badges.forEach(b => migrated[b] = 1);
@@ -1487,20 +1526,29 @@
         document.getElementById('splash-p1-recap-avatar').src = profiles[p1Profile].img;
         document.getElementById('splash-p2-recap-avatar').src = profiles[p2Profile].img;
 
-        document.getElementById('splash-p1-ppg').innerText = (p1SeriesStats.pts / gamesPlayed).toFixed(1);
-        document.getElementById('splash-p1-apg').innerText = (p1SeriesStats.ast / gamesPlayed).toFixed(1);
-        document.getElementById('splash-p1-rpg').innerText = (p1SeriesStats.treb / gamesPlayed).toFixed(1);
-        document.getElementById('splash-p1-spg').innerText = (p1SeriesStats.stl / gamesPlayed).toFixed(1);
-        document.getElementById('splash-p1-bpg').innerText = (p1SeriesStats.blk / gamesPlayed).toFixed(1);
-        let p1Fgp = p1SeriesStats.fg_attempts > 0 ? Math.round((p1SeriesStats.fg_makes / p1SeriesStats.fg_attempts) * 100) : 0;
+        let p1Ppg = (p1SeriesStats.pts / gamesPlayed).toFixed(1);
+        let p1Apg = (p1SeriesStats.ast / gamesPlayed).toFixed(1);
+        let p1Rpg = (p1SeriesStats.treb / gamesPlayed).toFixed(1);
+        let p1Spg = (p1SeriesStats.stl / gamesPlayed).toFixed(1);
+        let p1Bpg = (p1SeriesStats.blk / gamesPlayed).toFixed(1);
+        let p1FgpRaw = p1SeriesStats.fg_attempts > 0 ? (p1SeriesStats.fg_makes / p1SeriesStats.fg_attempts) * 100 : 0;
+        let p1Fgp = Math.round(p1FgpRaw);
+        
+        document.getElementById('splash-p1-ppg').innerText = p1Ppg;
+        document.getElementById('splash-p1-apg').innerText = p1Apg;
+        document.getElementById('splash-p1-rpg').innerText = p1Rpg;
+        document.getElementById('splash-p1-spg').innerText = p1Spg;
+        document.getElementById('splash-p1-bpg').innerText = p1Bpg;
         document.getElementById('splash-p1-fgp').innerText = `${p1Fgp}%`;
+
+        let p2FgpRaw = p2SeriesStats.fg_attempts > 0 ? (p2SeriesStats.fg_makes / p2SeriesStats.fg_attempts) * 100 : 0;
+        let p2Fgp = Math.round(p2FgpRaw);
 
         document.getElementById('splash-p2-ppg').innerText = (p2SeriesStats.pts / gamesPlayed).toFixed(1);
         document.getElementById('splash-p2-apg').innerText = (p2SeriesStats.ast / gamesPlayed).toFixed(1);
         document.getElementById('splash-p2-rpg').innerText = (p2SeriesStats.treb / gamesPlayed).toFixed(1);
         document.getElementById('splash-p2-spg').innerText = (p2SeriesStats.stl / gamesPlayed).toFixed(1);
         document.getElementById('splash-p2-bpg').innerText = (p2SeriesStats.blk / gamesPlayed).toFixed(1);
-        let p2Fgp = p2SeriesStats.fg_attempts > 0 ? Math.round((p2SeriesStats.fg_makes / p2SeriesStats.fg_attempts) * 100) : 0;
         document.getElementById('splash-p2-fgp').innerText = `${p2Fgp}%`;
 
         document.getElementById('series-splash-step1').style.display = 'flex';
@@ -1517,18 +1565,27 @@
                     let newCounts = data.archetypeCounts || {};
                     newCounts[p1Profile] = (newCounts[p1Profile] || 0) + 1;
 
+                    let tpPct = p1SeriesStats.fg3_attempts > 0 ? (p1SeriesStats.fg3_makes / p1SeriesStats.fg3_attempts) * 100 : 0;
+                    
+                    // UPDATED: Massive History Object Upgrade
                     let newSeriesObj = {
                         result: wonSeries ? 'W' : 'L',
-                        ppg: (p1SeriesStats.pts / gamesPlayed).toFixed(1),
-                        rpg: (p1SeriesStats.treb / gamesPlayed).toFixed(1),
-                        apg: (p1SeriesStats.ast / gamesPlayed).toFixed(1),
-                        fgp: p1Fgp
+                        seriesScore: `${p1SeriesWins}-${p2SeriesWins}`,
+                        ppg: p1Ppg,
+                        rpg: p1Rpg,
+                        apg: p1Apg,
+                        bpg: p1Bpg,
+                        spg: p1Spg,
+                        fgp: p1Fgp,
+                        tpp: tpPct.toFixed(1),
+                        oppFgp: p2FgpRaw.toFixed(1),
+                        otWins: p1SeriesStats.otWins
                     };
                     let newHistory = data.seriesHistory || [];
                     newHistory.unshift(newSeriesObj); 
                     if (newHistory.length > 5) newHistory.pop(); 
 
-                    // Full Achievements Engine
+                    // Badges Engine
                     let newStreak = wonSeries ? (data.currentStreak || 0) + 1 : 0;
                     
                     let currentBadges = data.achievements || {};
@@ -1546,23 +1603,20 @@
                     }
                     
                     if (p1SeriesStats.otWins > 0) currentBadges['ice'] = (currentBadges['ice'] || 0) + p1SeriesStats.otWins;
-                    
-                    let tpPct = p1SeriesStats.fg3_attempts > 0 ? (p1SeriesStats.fg3_makes / p1SeriesStats.fg3_attempts) * 100 : 0;
                     if (tpPct >= 50 && p1SeriesStats.fg3_attempts > 0) currentBadges['sharpshooter'] = (currentBadges['sharpshooter'] || 0) + 1;
                     
-                    if ((p1SeriesStats.blk / gamesPlayed) >= 3.0) currentBadges['brickwall'] = (currentBadges['brickwall'] || 0) + 1;
-                    if ((p1SeriesStats.ast / gamesPlayed) >= 5.0) currentBadges['floorgeneral'] = (currentBadges['floorgeneral'] || 0) + 1;
-                    if ((p1SeriesStats.treb / gamesPlayed) >= 10.0) currentBadges['glasscleaner'] = (currentBadges['glasscleaner'] || 0) + 1;
-                    if ((p1SeriesStats.pts / gamesPlayed) >= 20.0) currentBadges['carryjob'] = (currentBadges['carryjob'] || 0) + 1;
+                    if (parseFloat(p1Bpg) >= 3.0) currentBadges['brickwall'] = (currentBadges['brickwall'] || 0) + 1;
+                    if (parseFloat(p1Apg) >= 5.0) currentBadges['floorgeneral'] = (currentBadges['floorgeneral'] || 0) + 1;
+                    if (parseFloat(p1Rpg) >= 10.0) currentBadges['glasscleaner'] = (currentBadges['glasscleaner'] || 0) + 1;
+                    if (parseFloat(p1Ppg) >= 20.0) currentBadges['carryjob'] = (currentBadges['carryjob'] || 0) + 1;
                     
-                    if (p2Fgp < 35 && p2SeriesStats.fg_attempts > 0) currentBadges['lockdown'] = (currentBadges['lockdown'] || 0) + 1;
+                    if (p2FgpRaw < 35 && p2SeriesStats.fg_attempts > 0) currentBadges['lockdown'] = (currentBadges['lockdown'] || 0) + 1;
 
                     let projectedWins = (data.seriesWins || 0) + (wonSeries ? 1 : 0);
                     let projectedLosses = (data.seriesLosses || 0) + (!wonSeries ? 1 : 0);
                     let projectedTotalSeries = projectedWins + projectedLosses;
                     let projectedWinPct = projectedTotalSeries > 0 ? (projectedWins / projectedTotalSeries) * 100 : 0;
                     
-                    // Dynasty is a 1-time permanent unlock if you meet MVP criteria
                     if (projectedTotalSeries >= 10 && projectedWinPct >= 70) {
                         if (!currentBadges['dynasty']) currentBadges['dynasty'] = 1;
                     }
