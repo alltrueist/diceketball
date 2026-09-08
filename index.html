@@ -87,7 +87,6 @@
             backdrop-filter: blur(4px);
         }
 
-        /* Show the mute button at all times */
         #btn-mute {
             display: block;
             font-size: 1rem;
@@ -427,7 +426,6 @@
             z-index: 2;
         }
 
-        /* Achievements/Badges Row */
         .card-badges {
             display: flex;
             justify-content: center;
@@ -452,12 +450,34 @@
             filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.8));
         }
 
+        .card-subtabs {
+            display: flex;
+            width: 100%;
+            margin-bottom: 5px;
+            z-index: 2;
+        }
+
+        .btn-subtab {
+            flex: 1;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #444;
+            color: var(--text-muted);
+            padding: 6px;
+            cursor: pointer;
+            font-family: sans-serif;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .btn-subtab.active {
+            background: var(--highlight-border);
+            color: #000;
+        }
+
         .card-table-wrapper {
             width: 100%;
             background: rgba(0,0,0,0.6);
-            border-radius: 8px;
             border: 1px solid #444;
-            overflow: hidden;
             z-index: 2;
         }
 
@@ -621,7 +641,6 @@
 </head>
 <body>
 
-<!-- NATIVE AUDIO ELEMENTS FOR BETTER BROWSER SUPPORT -->
 <audio id="sfx-buzzer" src="sfx-buzzer.mp3" preload="auto"></audio>
 <audio id="sfx-cheer" src="sfx-cheer.mp3" preload="auto"></audio>
 
@@ -764,7 +783,7 @@
     </div>
 </div>
 
-<!-- Public/Private Card Splash Screen (Higher z-index to pop over leaderboard) -->
+<!-- Public/Private Card Splash Screen -->
 <div class="splash-overlay" id="card-overlay" style="z-index: 1600;">
     <div class="bball-card">
         <img id="card-frame-image" src="" class="card-frame" onerror="this.style.display='none'">
@@ -775,12 +794,16 @@
         <h2 id="card-username-display" class="card-username">PLAYER</h2>
         <div id="card-record-display" class="card-record">0W - 0L</div>
         
-        <!-- Badges Container -->
         <div class="card-badges" id="card-badges-display">
             <!-- Populated by JS -->
         </div>
 
-        <div class="card-table-wrapper">
+        <div class="card-subtabs">
+            <button id="tab-btn-history" class="btn-subtab active" onclick="switchCardTab('history')">HISTORY</button>
+            <button id="tab-btn-matchups" class="btn-subtab" onclick="switchCardTab('matchups')">MATCHUPS</button>
+        </div>
+
+        <div class="card-table-wrapper" id="card-history-container">
             <table class="card-table">
                 <thead>
                     <tr>
@@ -797,6 +820,11 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="card-table-wrapper" id="card-matchups-container" style="display: none;">
+            <!-- Populated by JS -->
+        </div>
+
         <button class="btn-action" style="display: block; width: 100%; margin-top: 20px; z-index: 20; padding: 10px;" onclick="closeCardOverlay()">CLOSE CARD</button>
     </div>
 </div>
@@ -906,7 +934,6 @@
 
     let currentUser = null;
 
-    // AUDIO & HAPTICS ENGINE
     let soundEnabled = true;
     
     document.getElementById('btn-mute').addEventListener('click', (e) => {
@@ -919,14 +946,12 @@
             const audioObj = document.getElementById(elementId);
             if (audioObj) {
                 audioObj.currentTime = 0;
-                // .catch() prevents the browser from crashing if it blocks autoplay
                 audioObj.play().catch(e => console.log("Audio prevented by browser policies."));
             }
         }
     }
 
     function triggerVibration(pattern) {
-        // navigator.vibrate is disabled by Apple on iOS Safari. Works great on Android!
         if (soundEnabled && navigator.vibrate) {
             navigator.vibrate(pattern);
         }
@@ -1048,6 +1073,7 @@
                 currentStreak: 0,
                 achievements: {}, 
                 archetypeCounts: {},
+                archetypeMatchups: {},
                 seriesHistory: []
             });
         }).catch(err => {
@@ -1057,7 +1083,6 @@
 
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-    // ACCOUNT MANAGEMENT LOGIC
     document.getElementById('btn-account').addEventListener('click', async () => {
         if (!currentUser) return;
         document.getElementById('account-error').innerText = "";
@@ -1112,7 +1137,6 @@
     }
 
 
-    // LEADERBOARD LOGIC
     let cachedLeaderboardData = [];
     
     document.getElementById('btn-leaderboard').addEventListener('click', async () => {
@@ -1229,7 +1253,21 @@
         document.querySelector('.lb-tab[data-cat="wins"]').classList.add('active');
     }
 
-    // SHARED BASKETBALL CARD LOGIC
+
+    window.switchCardTab = function(tabName) {
+        if (tabName === 'history') {
+            document.getElementById('tab-btn-history').classList.add('active');
+            document.getElementById('tab-btn-matchups').classList.remove('active');
+            document.getElementById('card-history-container').style.display = 'block';
+            document.getElementById('card-matchups-container').style.display = 'none';
+        } else {
+            document.getElementById('tab-btn-matchups').classList.add('active');
+            document.getElementById('tab-btn-history').classList.remove('active');
+            document.getElementById('card-matchups-container').style.display = 'block';
+            document.getElementById('card-history-container').style.display = 'none';
+        }
+    }
+
     window.populateAndShowCard = async function(targetUid) {
         try {
             const userRef = doc(db, "users", targetUid);
@@ -1303,6 +1341,12 @@
                     { id: 'glasscleaner', emoji: '🧲', desc: 'Glass Cleaner: Average 10.0+ Rebounds in a series' },
                     { id: 'carryjob', emoji: '💼', desc: 'The Carry Job: Average 20.0+ Points in a series' },
                     { id: 'lockdown', emoji: '🔒', desc: 'Lockdown: Hold opponent under 35% FG in a series' },
+                    { id: 'slayer_playmaker', emoji: '🥷', desc: 'Interceptor: Defeat a Playmaker' },
+                    { id: 'slayer_sniper', emoji: '🖐️', desc: 'Hand in the Face: Defeat a Sniper' },
+                    { id: 'slayer_defender', emoji: '🌪️', desc: 'Ankle Breaker: Defeat a Defender' },
+                    { id: 'slayer_dunker', emoji: '🚧', desc: 'Stuffed: Defeat a Dunker' },
+                    { id: 'slayer_rimprotector', emoji: '🪓', desc: 'Giant Killer: Defeat a Rim Protector' },
+                    { id: 'slayer_stretch5', emoji: '🚜', desc: 'Paint Bully: Defeat a Stretch 5' },
                     { id: 'dynasty', emoji: '👑', desc: 'Dynasty: Reach the MVP Tier (70%+ Win Rate over 10+ Series)', oneTime: true }
                 ];
 
@@ -1318,6 +1362,7 @@
                 }
                 document.getElementById('card-badges-display').innerHTML = badgesHtml;
 
+                // HISTORY TABLE
                 const tbody = document.getElementById('card-table-body');
                 tbody.innerHTML = '';
                 const history = data.seriesHistory || [];
@@ -1356,6 +1401,32 @@
                         <td>${cFgp}%</td>
                     </tr>
                 `;
+
+                // MATCHUPS TABLE
+                let matchupsHtml = `<table class="card-table">
+                    <thead><tr><th style="text-align:left; padding-left:10px;">OPPONENT</th><th>W</th><th>L</th><th>WIN %</th></tr></thead>
+                    <tbody>`;
+                
+                const archKeys = Object.keys(profiles);
+                archKeys.forEach(arch => {
+                    let mw = (data.archetypeMatchups && data.archetypeMatchups[arch]) ? data.archetypeMatchups[arch].w : 0;
+                    let ml = (data.archetypeMatchups && data.archetypeMatchups[arch]) ? data.archetypeMatchups[arch].l : 0;
+                    let mTot = mw + ml;
+                    let mPct = mTot > 0 ? Math.round((mw / mTot) * 100) : 0;
+                    
+                    matchupsHtml += `<tr>
+                        <td style="text-align:left; padding-left:10px; font-weight:bold;">${profiles[arch].abbr}</td>
+                        <td style="color:var(--boost-color);">${mw}</td>
+                        <td style="color:var(--reduce-color);">${ml}</td>
+                        <td>${mTot > 0 ? mPct + '%' : '-'}</td>
+                    </tr>`;
+                });
+                matchupsHtml += `</tbody></table>`;
+                document.getElementById('card-matchups-container').innerHTML = matchupsHtml;
+
+                // Reset to History tab on open
+                switchCardTab('history');
+                
                 document.getElementById('card-overlay').style.display = 'flex';
             }
         } catch (error) {
@@ -1363,7 +1434,6 @@
         }
     }
 
-    // Consolidated strictly into one click event listener
     document.getElementById('btn-my-card').addEventListener('click', () => {
         if (currentUser) {
             populateAndShowCard(currentUser.uid);
@@ -1588,6 +1658,7 @@
 
         const p1Profile = document.getElementById('p1-profile').value;
         const p2Profile = document.getElementById('p2-profile').value;
+        const oppArch = p2Profile; // Tracker for the opponent's archetype
         
         document.getElementById('splash-champ').innerText = `🏆 ${champName} WINS! 🏆`;
         document.getElementById('splash-champ-avatar').src = champPrefix === 'p1' ? profiles[p1Profile].img : profiles[p2Profile].img;
@@ -1637,11 +1708,17 @@
                     let newCounts = data.archetypeCounts || {};
                     newCounts[p1Profile] = (newCounts[p1Profile] || 0) + 1;
 
+                    let matchups = data.archetypeMatchups || {};
+                    if (!matchups[oppArch]) matchups[oppArch] = { w: 0, l: 0 };
+                    if (wonSeries) matchups[oppArch].w++;
+                    else matchups[oppArch].l++;
+
                     let tpPct = p1SeriesStats.fg3_attempts > 0 ? (p1SeriesStats.fg3_makes / p1SeriesStats.fg3_attempts) * 100 : 0;
                     
                     let newSeriesObj = {
                         result: wonSeries ? 'W' : 'L',
                         seriesScore: `${p1SeriesWins}-${p2SeriesWins}`,
+                        oppArch: oppArch,
                         ppg: p1Ppg,
                         rpg: p1Rpg,
                         apg: p1Apg,
@@ -1670,6 +1747,10 @@
                     if (wonSeries) {
                         if (p1SeriesWins === 4 && p2SeriesWins === 0) currentBadges['sweep'] = (currentBadges['sweep'] || 0) + 1;
                         if (p1SeriesWins === 4 && p2SeriesWins === 3) currentBadges['ironman'] = (currentBadges['ironman'] || 0) + 1;
+                        
+                        // Archetype Slayer Badges
+                        let slayerId = 'slayer_' + oppArch;
+                        currentBadges[slayerId] = (currentBadges[slayerId] || 0) + 1;
                     }
                     
                     if (p1SeriesStats.otWins > 0) currentBadges['ice'] = (currentBadges['ice'] || 0) + p1SeriesStats.otWins;
@@ -1705,6 +1786,7 @@
                         currentStreak: newStreak,
                         achievements: currentBadges,
                         archetypeCounts: newCounts,
+                        archetypeMatchups: matchups,
                         seriesHistory: newHistory
                     }).catch(err => console.error("Error saving stats: ", err));
                 }
