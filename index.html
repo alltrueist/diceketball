@@ -425,11 +425,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-wrap: wrap; /* Allows multiple rows if you unlock them all! */
             gap: 12px;
             margin-bottom: 15px;
             z-index: 2;
             width: 100%;
-            min-height: 35px; /* Keeps layout stable */
+            min-height: 35px;
         }
 
         .badge-icon {
@@ -963,7 +964,7 @@
                 total3ptMakes: 0,
                 total3ptAttempts: 0,
                 currentStreak: 0,
-                achievements: [],
+                achievements: {}, // Upgraded to Object Map
                 archetypeCounts: {},
                 seriesHistory: []
             });
@@ -1200,20 +1201,40 @@
                 avatarEl.style.display = 'none';
             }
 
-            // Populate Badges
+            // Upgraded Badges Engine
+            let badges = data.achievements || {};
+            // Migration check: if player has old array format, safely upgrade it locally for display
+            if (Array.isArray(badges)) {
+                let migrated = {};
+                badges.forEach(b => migrated[b] = 1);
+                badges = migrated;
+            }
+
             let badgesHtml = "";
-            let badges = data.achievements || [];
+            const badgeDefs = [
+                { id: 'tipoff', emoji: '🏀', desc: 'Tip-Off: Complete your first series', oneTime: true },
+                { id: 'sweep', emoji: '🧹', desc: 'The Sweep: Win a series with a flawless 4-0 record' },
+                { id: 'ironman', emoji: '🏃', desc: 'Iron Man: Win a grueling 7-game series (4-3)' },
+                { id: 'ice', emoji: '🧊', desc: 'Ice in the Veins: Win a game in Overtime' },
+                { id: 'sharpshooter', emoji: '🎯', desc: 'Sharpshooter: Finish a series with 50%+ 3PT' },
+                { id: 'brickwall', emoji: '🧱', desc: 'Brick Wall: Average 3.0+ Blocks in a series' },
+                { id: 'floorgeneral', emoji: '🥽', desc: 'Floor General: Average 5.0+ Assists in a series' },
+                { id: 'glasscleaner', emoji: '🧲', desc: 'Glass Cleaner: Average 10.0+ Rebounds in a series' },
+                { id: 'carryjob', emoji: '💼', desc: 'The Carry Job: Average 20.0+ Points in a series' },
+                { id: 'lockdown', emoji: '🔒', desc: 'Lockdown: Hold opponent under 35% FG in a series' },
+                { id: 'dynasty', emoji: '👑', desc: 'Dynasty: Reach the MVP Tier (70%+ Win Rate over 10+ Series)', oneTime: true }
+            ];
+
+            badgeDefs.forEach(b => {
+                if (badges[b.id] && badges[b.id] > 0) {
+                    let countStr = (!b.oneTime && badges[b.id] > 1) ? `<span style="font-size:0.7rem; color:var(--text-muted); font-weight:bold; margin-left:2px;">x${badges[b.id]}</span>` : '';
+                    badgesHtml += `<div style="display:inline-flex; align-items:center;"><span class="badge-icon" title="${b.desc}">${b.emoji}</span>${countStr}</div>`;
+                }
+            });
             
-            if (badges.includes('tipoff')) badgesHtml += `<span class="badge-icon" title="Tip-Off: Complete your first series">🏀</span>`;
-            if (badges.includes('sweep')) badgesHtml += `<span class="badge-icon" title="The Sweep: Win a series with a flawless 4-0 record">🧹</span>`;
-            if (badges.includes('ice')) badgesHtml += `<span class="badge-icon" title="Ice in the Veins: Win a game in Overtime">🧊</span>`;
-            if (badges.includes('sharpshooter')) badgesHtml += `<span class="badge-icon" title="Sharpshooter: Finish a series with 50%+ 3PT">🎯</span>`;
-            if (badges.includes('brickwall')) badgesHtml += `<span class="badge-icon" title="Brick Wall: Average 3.0+ Blocks in a series">🧱</span>`;
-            
-            if (badges.length === 0) {
+            if (badgesHtml === "") {
                 badgesHtml = `<span style="color: #666; font-size: 0.8rem; font-family: sans-serif; font-style: italic;">No badges earned yet</span>`;
             }
-            
             document.getElementById('card-badges-display').innerHTML = badgesHtml;
 
             const tbody = document.getElementById('card-table-body');
@@ -1507,18 +1528,43 @@
                     newHistory.unshift(newSeriesObj); 
                     if (newHistory.length > 5) newHistory.pop(); 
 
-                    // Achievements & Streak Engine
+                    // Full Achievements Engine
                     let newStreak = wonSeries ? (data.currentStreak || 0) + 1 : 0;
-                    let currentBadges = data.achievements || [];
                     
-                    if (!currentBadges.includes('tipoff')) currentBadges.push('tipoff');
+                    let currentBadges = data.achievements || {};
+                    if (Array.isArray(currentBadges)) {
+                        let migrated = {};
+                        currentBadges.forEach(b => migrated[b] = 1);
+                        currentBadges = migrated;
+                    }
+
+                    if (!currentBadges['tipoff']) currentBadges['tipoff'] = 1;
 
                     if (wonSeries) {
-                        if (p1SeriesWins === 4 && p2SeriesWins === 0 && !currentBadges.includes('sweep')) currentBadges.push('sweep');
-                        if (p1SeriesStats.otWins > 0 && !currentBadges.includes('ice')) currentBadges.push('ice');
-                        let tpPct = p1SeriesStats.fg3_attempts > 0 ? (p1SeriesStats.fg3_makes / p1SeriesStats.fg3_attempts) * 100 : 0;
-                        if (tpPct >= 50 && p1SeriesStats.fg3_attempts > 0 && !currentBadges.includes('sharpshooter')) currentBadges.push('sharpshooter');
-                        if ((p1SeriesStats.blk / gamesPlayed) >= 3.0 && !currentBadges.includes('brickwall')) currentBadges.push('brickwall');
+                        if (p1SeriesWins === 4 && p2SeriesWins === 0) currentBadges['sweep'] = (currentBadges['sweep'] || 0) + 1;
+                        if (p1SeriesWins === 4 && p2SeriesWins === 3) currentBadges['ironman'] = (currentBadges['ironman'] || 0) + 1;
+                    }
+                    
+                    if (p1SeriesStats.otWins > 0) currentBadges['ice'] = (currentBadges['ice'] || 0) + p1SeriesStats.otWins;
+                    
+                    let tpPct = p1SeriesStats.fg3_attempts > 0 ? (p1SeriesStats.fg3_makes / p1SeriesStats.fg3_attempts) * 100 : 0;
+                    if (tpPct >= 50 && p1SeriesStats.fg3_attempts > 0) currentBadges['sharpshooter'] = (currentBadges['sharpshooter'] || 0) + 1;
+                    
+                    if ((p1SeriesStats.blk / gamesPlayed) >= 3.0) currentBadges['brickwall'] = (currentBadges['brickwall'] || 0) + 1;
+                    if ((p1SeriesStats.ast / gamesPlayed) >= 5.0) currentBadges['floorgeneral'] = (currentBadges['floorgeneral'] || 0) + 1;
+                    if ((p1SeriesStats.treb / gamesPlayed) >= 10.0) currentBadges['glasscleaner'] = (currentBadges['glasscleaner'] || 0) + 1;
+                    if ((p1SeriesStats.pts / gamesPlayed) >= 20.0) currentBadges['carryjob'] = (currentBadges['carryjob'] || 0) + 1;
+                    
+                    if (p2Fgp < 35 && p2SeriesStats.fg_attempts > 0) currentBadges['lockdown'] = (currentBadges['lockdown'] || 0) + 1;
+
+                    let projectedWins = (data.seriesWins || 0) + (wonSeries ? 1 : 0);
+                    let projectedLosses = (data.seriesLosses || 0) + (!wonSeries ? 1 : 0);
+                    let projectedTotalSeries = projectedWins + projectedLosses;
+                    let projectedWinPct = projectedTotalSeries > 0 ? (projectedWins / projectedTotalSeries) * 100 : 0;
+                    
+                    // Dynasty is a 1-time permanent unlock if you meet MVP criteria
+                    if (projectedTotalSeries >= 10 && projectedWinPct >= 70) {
+                        if (!currentBadges['dynasty']) currentBadges['dynasty'] = 1;
                     }
 
                     updateDoc(userRef, {
