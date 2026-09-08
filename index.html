@@ -403,7 +403,7 @@
 
         .card-username {
             color: var(--text-main);
-            font-size: clamp(2rem, 6vw, 2.5rem);
+            font-size: clamp(1.8rem, 5.5vw, 2.3rem);
             margin: 0 0 10px 0;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             z-index: 2;
@@ -416,8 +416,31 @@
             color: var(--text-muted);
             font-size: 1rem;
             font-weight: bold;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             z-index: 2;
+        }
+
+        /* Achievements/Badges Row */
+        .card-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            z-index: 2;
+            width: 100%;
+            min-height: 35px; /* Keeps layout stable even if no badges */
+        }
+
+        .badge-icon {
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
+            cursor: help; /* Shows a question mark mouse pointer to hint at the tooltip */
+            transition: transform 0.2s;
+        }
+
+        .badge-icon:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.8));
         }
 
         .card-table-wrapper {
@@ -721,16 +744,22 @@
     </div>
 </div>
 
-<!-- Public/Private Card Splash Screen (Higher z-index to pop over leaderboard) -->
+<!-- Public/Private Card Splash Screen -->
 <div class="splash-overlay" id="card-overlay" style="z-index: 1600;">
     <div class="bball-card">
         <img id="card-frame-image" src="" class="card-frame" onerror="this.style.display='none'">
         <div class="card-hologram"></div>
         <div id="card-tier-display" class="card-tier-badge">ROOKIE TIER</div>
         <img id="card-avatar" src="" class="champ-avatar" style="border-color: #444;" onerror="this.style.display='none'">
+        
         <h2 id="card-username-display" class="card-username">PLAYER</h2>
         <div id="card-record-display" class="card-record">0W - 0L</div>
         
+        <!-- Badges Container -->
+        <div class="card-badges" id="card-badges-display">
+            <!-- Populated by JS -->
+        </div>
+
         <div class="card-table-wrapper">
             <table class="card-table">
                 <thead>
@@ -932,6 +961,8 @@
                 totalFgAttempts: 0,
                 total3ptMakes: 0,
                 total3ptAttempts: 0,
+                currentStreak: 0,
+                achievements: [],
                 archetypeCounts: {},
                 seriesHistory: []
             });
@@ -1005,7 +1036,6 @@
         document.getElementById('leaderboard-overlay').style.display = 'flex';
         
         const querySnapshot = await getDocs(collection(db, "users"));
-        // Inject the uid into the data so we can click on players!
         cachedLeaderboardData = querySnapshot.docs.map(doc => {
             let d = doc.data();
             d.uid = doc.id;
@@ -1023,8 +1053,8 @@
             let displayStr = "";
             let games = u.totalGamesPlayed || 0;
             let series = (u.seriesWins || 0) + (u.seriesLosses || 0);
+            let streak = u.currentStreak || 0;
 
-            // Determine Most Used Avatar for the Leaderboard
             let mostUsed = 'none';
             let maxCount = 0;
             if (u.archetypeCounts) {
@@ -1039,52 +1069,35 @@
             
             switch(category) {
                 case 'wins': 
-                    val = u.seriesWins || 0; 
-                    displayStr = val; 
-                    document.getElementById('lb-stat-header').innerText = "WINS";
-                    break;
+                    val = u.seriesWins || 0; displayStr = val; 
+                    document.getElementById('lb-stat-header').innerText = "WINS"; break;
                 case 'winPct': 
-                    val = series > 0 ? (u.seriesWins / series) * 100 : 0; 
-                    displayStr = `${val.toFixed(1)}%`; 
-                    document.getElementById('lb-stat-header').innerText = "WIN %";
-                    break;
+                    val = series > 0 ? (u.seriesWins / series) * 100 : 0; displayStr = `${val.toFixed(1)}%`; 
+                    document.getElementById('lb-stat-header').innerText = "WIN %"; break;
                 case 'ppg': 
-                    val = games > 0 ? u.totalPoints / games : 0; 
-                    displayStr = val.toFixed(1); 
-                    document.getElementById('lb-stat-header').innerText = "PPG";
-                    break;
+                    val = games > 0 ? u.totalPoints / games : 0; displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "PPG"; break;
                 case 'rpg': 
-                    val = games > 0 ? u.totalRebounds / games : 0; 
-                    displayStr = val.toFixed(1); 
-                    document.getElementById('lb-stat-header').innerText = "RPG";
-                    break;
+                    val = games > 0 ? u.totalRebounds / games : 0; displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "RPG"; break;
                 case 'apg': 
-                    val = games > 0 ? u.totalAssists / games : 0; 
-                    displayStr = val.toFixed(1); 
-                    document.getElementById('lb-stat-header').innerText = "APG";
-                    break;
+                    val = games > 0 ? u.totalAssists / games : 0; displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "APG"; break;
                 case 'spg': 
-                    val = games > 0 ? u.totalSteals / games : 0; 
-                    displayStr = val.toFixed(1); 
-                    document.getElementById('lb-stat-header').innerText = "SPG";
-                    break;
+                    val = games > 0 ? u.totalSteals / games : 0; displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "SPG"; break;
                 case 'bpg': 
-                    val = games > 0 ? u.totalBlocks / games : 0; 
-                    displayStr = val.toFixed(1); 
-                    document.getElementById('lb-stat-header').innerText = "BPG";
-                    break;
+                    val = games > 0 ? u.totalBlocks / games : 0; displayStr = val.toFixed(1); 
+                    document.getElementById('lb-stat-header').innerText = "BPG"; break;
                 case 'fgp': 
-                    let fga = u.totalFgAttempts || 0;
-                    let fgm = u.totalFgMakes || 0;
-                    let tpa = u.total3ptAttempts || 0;
-                    let tpm = u.total3ptMakes || 0;
+                    let fga = u.totalFgAttempts || 0; let fgm = u.totalFgMakes || 0;
+                    let tpa = u.total3ptAttempts || 0; let tpm = u.total3ptMakes || 0;
                     val = fga > 0 ? (fgm / fga) * 100 : 0;
                     let tpPct = tpa > 0 ? (tpm / tpa) * 100 : 0;
                     displayStr = `<b>${val.toFixed(1)}%</b> <span style="font-size:0.75rem; color:var(--text-muted);">(3PT: ${tpPct.toFixed(1)}%)</span>`;
-                    document.getElementById('lb-stat-header').innerText = "FG% (3PT%)";
-                    break;
+                    document.getElementById('lb-stat-header').innerText = "FG% (3PT%)"; break;
             }
-            return { uid: u.uid, username: u.username || 'PLAYER', val: val, displayStr: displayStr, avatarSrc: avatarSrc };
+            return { uid: u.uid, username: u.username || 'PLAYER', val: val, displayStr: displayStr, avatarSrc: avatarSrc, streak: streak };
         });
 
         list.sort((a, b) => b.val - a.val);
@@ -1101,6 +1114,7 @@
         list.forEach((item, index) => {
             let rankColor = index === 0 ? "var(--highlight-border)" : (index === 1 ? "#C0C0C0" : (index === 2 ? "#CD7F32" : "var(--text-main)"));
             let avatarHtml = item.avatarSrc ? `<img src="${item.avatarSrc}" style="width: 28px; height: 28px; border-radius: 50%; vertical-align: middle; margin-right: 8px; border: 1px solid #555; object-fit: cover;">` : '';
+            let streakHtml = item.streak >= 3 ? `<span style="font-size: 0.9rem; margin-left: 5px;" title="${item.streak} Win Streak">🔥${item.streak}</span>` : '';
             
             tbody.innerHTML += `
                 <tr>
@@ -1109,7 +1123,7 @@
                         onclick="populateAndShowCard('${item.uid}')" 
                         onmouseover="this.style.color='var(--highlight-border)'" 
                         onmouseout="this.style.color='var(--text-main)'">
-                        ${avatarHtml}${item.username}
+                        ${avatarHtml}${item.username}${streakHtml}
                     </td>
                     <td style="color: var(--boost-color);">${item.displayStr}</td>
                 </tr>
@@ -1139,7 +1153,9 @@
         if (docSnap.exists()) {
             const data = docSnap.data();
             
-            document.getElementById('card-username-display').innerText = data.username ? data.username.toUpperCase() : "PLAYER";
+            let streak = data.currentStreak || 0;
+            let streakStr = streak >= 3 ? ` 🔥${streak}` : "";
+            document.getElementById('card-username-display').innerText = (data.username ? data.username.toUpperCase() : "PLAYER") + streakStr;
             
             let wins = data.seriesWins || 0;
             let losses = data.seriesLosses || 0;
@@ -1182,6 +1198,15 @@
             } else {
                 avatarEl.style.display = 'none';
             }
+
+            // Populate Badges
+            let badgesHtml = "";
+            let badges = data.achievements || [];
+            if (badges.includes('sweep')) badgesHtml += `<span class="badge-icon" title="The Sweep: Win a series with a flawless 4-0 record">🧹</span>`;
+            if (badges.includes('ice')) badgesHtml += `<span class="badge-icon" title="Ice in the Veins: Win a game in Overtime">🧊</span>`;
+            if (badges.includes('sharpshooter')) badgesHtml += `<span class="badge-icon" title="Sharpshooter: Finish a series with 50%+ 3PT">🎯</span>`;
+            if (badges.includes('brickwall')) badgesHtml += `<span class="badge-icon" title="Brick Wall: Average 3.0+ Blocks in a series">🧱</span>`;
+            document.getElementById('card-badges-display').innerHTML = badgesHtml;
 
             const tbody = document.getElementById('card-table-body');
             tbody.innerHTML = '';
@@ -1262,8 +1287,9 @@
     let p1SeriesWins = 0, p2SeriesWins = 0;
     let gamesPlayed = 0;
     
-    let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
-    let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
+    // Notice `otWins` tracks overtime games won by P1 in this specific series
+    let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
+    let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
     let pendingGameWinner = '';
 
     function initBoard() {
@@ -1322,8 +1348,8 @@
             document.getElementById('p2-name').innerText = 'P2';
 
             gamesPlayed = 0;
-            p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
-            p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0 };
+            p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
+            p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
 
             document.getElementById('series-splash-overlay').style.display = 'none';
             document.getElementById('p1-profile').value = 'none';
@@ -1474,6 +1500,22 @@
                     newHistory.unshift(newSeriesObj); 
                     if (newHistory.length > 5) newHistory.pop(); 
 
+                    // Achievements & Streak Engine
+                    let newStreak = wonSeries ? (data.currentStreak || 0) + 1 : 0;
+                    let currentBadges = data.achievements || [];
+                    
+                    if (wonSeries) {
+                        // The Sweep
+                        if (p1SeriesWins === 4 && p2SeriesWins === 0 && !currentBadges.includes('sweep')) currentBadges.push('sweep');
+                        // Ice in the Veins
+                        if (p1SeriesStats.otWins > 0 && !currentBadges.includes('ice')) currentBadges.push('ice');
+                        // Sharpshooter
+                        let tpPct = p1SeriesStats.fg3_attempts > 0 ? (p1SeriesStats.fg3_makes / p1SeriesStats.fg3_attempts) * 100 : 0;
+                        if (tpPct >= 50 && p1SeriesStats.fg3_attempts > 0 && !currentBadges.includes('sharpshooter')) currentBadges.push('sharpshooter');
+                        // Brick Wall
+                        if ((p1SeriesStats.blk / gamesPlayed) >= 3.0 && !currentBadges.includes('brickwall')) currentBadges.push('brickwall');
+                    }
+
                     updateDoc(userRef, {
                         seriesWins: increment(wonSeries ? 1 : 0),
                         seriesLosses: increment(wonSeries ? 0 : 1),
@@ -1487,6 +1529,8 @@
                         totalFgAttempts: increment(p1SeriesStats.fg_attempts),
                         total3ptMakes: increment(p1SeriesStats.fg3_makes),
                         total3ptAttempts: increment(p1SeriesStats.fg3_attempts),
+                        currentStreak: newStreak,
+                        achievements: currentBadges,
                         archetypeCounts: newCounts,
                         seriesHistory: newHistory
                     }).catch(err => console.error("Error saving stats: ", err));
@@ -1531,6 +1575,11 @@
 
     function closeOvertimeSplash() {
         document.getElementById('ot-splash-overlay').style.display = 'none';
+        
+        // Track OT wins for achievements
+        if (pendingGameWinner === 'p1') p1SeriesStats.otWins++;
+        else p2SeriesStats.otWins++;
+        
         finalizeGame(pendingGameWinner);
     }
 
