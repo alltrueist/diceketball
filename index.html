@@ -365,7 +365,7 @@
             border-radius: 12px;
             width: 90%;
             max-width: 450px;
-            padding: clamp(100px, 22vw, 130px) clamp(35px, 10vw, 55px) clamp(80px, 18vw, 100px) clamp(35px, 10vw, 55px);
+            padding: clamp(100px, 22vw, 130px) clamp(25px, 6vw, 40px) clamp(80px, 18vw, 100px) clamp(25px, 6vw, 40px);
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
@@ -426,30 +426,6 @@
             z-index: 2;
         }
 
-        .card-badges {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap; 
-            gap: 12px;
-            margin-bottom: 15px;
-            z-index: 2;
-            width: 100%;
-            min-height: 35px; 
-        }
-
-        .badge-icon {
-            font-size: 1.8rem;
-            filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
-            cursor: help; 
-            transition: transform 0.2s;
-        }
-
-        .badge-icon:hover {
-            transform: scale(1.2);
-            filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.8));
-        }
-
         .card-subtabs {
             display: flex;
             width: 100%;
@@ -479,6 +455,8 @@
             background: rgba(0,0,0,0.6);
             border: 1px solid #444;
             z-index: 2;
+            min-height: 200px;
+            box-sizing: border-box;
         }
 
         .card-table {
@@ -783,7 +761,7 @@
     </div>
 </div>
 
-<!-- Public/Private Card Splash Screen -->
+<!-- Public/Private Card Splash Screen (Higher z-index to pop over leaderboard) -->
 <div class="splash-overlay" id="card-overlay" style="z-index: 1600;">
     <div class="bball-card">
         <img id="card-frame-image" src="" class="card-frame" onerror="this.style.display='none'">
@@ -793,14 +771,11 @@
         
         <h2 id="card-username-display" class="card-username">PLAYER</h2>
         <div id="card-record-display" class="card-record">0W - 0L</div>
-        
-        <div class="card-badges" id="card-badges-display">
-            <!-- Populated by JS -->
-        </div>
 
         <div class="card-subtabs">
             <button id="tab-btn-history" class="btn-subtab active" onclick="switchCardTab('history')">HISTORY</button>
             <button id="tab-btn-matchups" class="btn-subtab" onclick="switchCardTab('matchups')">MATCHUPS</button>
+            <button id="tab-btn-trophies" class="btn-subtab" onclick="switchCardTab('trophies')">TROPHIES</button>
         </div>
 
         <div class="card-table-wrapper" id="card-history-container">
@@ -822,6 +797,11 @@
         </div>
 
         <div class="card-table-wrapper" id="card-matchups-container" style="display: none;">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- NEW TROPHY GRID CONTAINER -->
+        <div id="card-trophies-container" class="card-table-wrapper" style="display: none; padding: 15px 5px; box-sizing: border-box; overflow-y: auto; max-height: 250px;">
             <!-- Populated by JS -->
         </div>
 
@@ -1071,6 +1051,7 @@
                 total3ptMakes: 0,
                 total3ptAttempts: 0,
                 currentStreak: 0,
+                careerHighs: { pts: 0, reb: 0, ast: 0, blk: 0, stl: 0 },
                 achievements: {}, 
                 archetypeCounts: {},
                 archetypeMatchups: {},
@@ -1253,18 +1234,24 @@
         document.querySelector('.lb-tab[data-cat="wins"]').classList.add('active');
     }
 
-
     window.switchCardTab = function(tabName) {
+        document.getElementById('tab-btn-history').classList.remove('active');
+        document.getElementById('tab-btn-matchups').classList.remove('active');
+        document.getElementById('tab-btn-trophies').classList.remove('active');
+        
+        document.getElementById('card-history-container').style.display = 'none';
+        document.getElementById('card-matchups-container').style.display = 'none';
+        document.getElementById('card-trophies-container').style.display = 'none';
+
         if (tabName === 'history') {
             document.getElementById('tab-btn-history').classList.add('active');
-            document.getElementById('tab-btn-matchups').classList.remove('active');
             document.getElementById('card-history-container').style.display = 'block';
-            document.getElementById('card-matchups-container').style.display = 'none';
-        } else {
+        } else if (tabName === 'matchups') {
             document.getElementById('tab-btn-matchups').classList.add('active');
-            document.getElementById('tab-btn-history').classList.remove('active');
             document.getElementById('card-matchups-container').style.display = 'block';
-            document.getElementById('card-history-container').style.display = 'none';
+        } else if (tabName === 'trophies') {
+            document.getElementById('tab-btn-trophies').classList.add('active');
+            document.getElementById('card-trophies-container').style.display = 'block';
         }
     }
 
@@ -1322,6 +1309,7 @@
                     avatarEl.style.display = 'none';
                 }
 
+                // NEW TROPHY GRID ENGINE
                 let badges = data.achievements || {};
                 if (Array.isArray(badges)) {
                     let migrated = {};
@@ -1329,7 +1317,6 @@
                     badges = migrated;
                 }
 
-                let badgesHtml = "";
                 const badgeDefs = [
                     { id: 'tipoff', emoji: '🏀', desc: 'Tip-Off: Complete your first series', oneTime: true },
                     { id: 'sweep', emoji: '🧹', desc: 'The Sweep: Win a series with a flawless 4-0 record' },
@@ -1338,11 +1325,17 @@
                     { id: 'sharpshooter', emoji: '🎯', desc: 'Sharpshooter: Finish a series with 50%+ 3PT' },
                     { id: 'brickwall', emoji: '🧱', desc: 'Brick Wall: Average 3.0+ Blocks in a series' },
                     { id: 'floorgeneral', emoji: '🥽', desc: 'Floor General: Average 5.0+ Assists in a series' },
-                    { id: 'glasscleaner', emoji: '🧲', desc: 'Glass Cleaner: Average 10.0+ Rebounds in a series' },
+                    { id: 'glasscleaner', emoji: '🧽', desc: 'Glass Cleaner: Average 10.0+ Rebounds in a series' },
                     { id: 'carryjob', emoji: '💼', desc: 'The Carry Job: Average 20.0+ Points in a series' },
                     { id: 'lockdown', emoji: '🔒', desc: 'Lockdown: Hold opponent under 35% FG in a series' },
+                    { id: 'chamberlain', emoji: '💯', desc: 'The Chamberlain: Score 40+ points in a single game' },
+                    { id: 'worm', emoji: '🐛', desc: 'The Worm: Grab 20+ rebounds in a single game' },
+                    { id: 'dimedropper', emoji: '🪙', desc: 'Dime Dropper: Dish out 15+ assists in a single game' },
+                    { id: 'notinmyhouse', emoji: '☝️', desc: 'Not In My House: Record 10+ blocks in a single game' },
+                    { id: 'tripledouble', emoji: '🌟', desc: 'Triple-Double: Double digits in 3 stat categories in a game' },
+                    { id: 'fivebyfive', emoji: '🖐️', desc: 'The 5x5 Club: 5+ PTS, REB, AST, BLK, STL in a single game' },
                     { id: 'slayer_playmaker', emoji: '🥷', desc: 'Interceptor: Defeat a Playmaker' },
-                    { id: 'slayer_sniper', emoji: '🖐️', desc: 'Hand in the Face: Defeat a Sniper' },
+                    { id: 'slayer_sniper', emoji: '🧤', desc: 'Hand in the Face: Defeat a Sniper' },
                     { id: 'slayer_defender', emoji: '🌪️', desc: 'Ankle Breaker: Defeat a Defender' },
                     { id: 'slayer_dunker', emoji: '🚧', desc: 'Stuffed: Defeat a Dunker' },
                     { id: 'slayer_rimprotector', emoji: '🪓', desc: 'Giant Killer: Defeat a Rim Protector' },
@@ -1350,19 +1343,23 @@
                     { id: 'dynasty', emoji: '👑', desc: 'Dynasty: Reach the MVP Tier (70%+ Win Rate over 10+ Series)', oneTime: true }
                 ];
 
+                let badgesHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 15px; text-align: center; width: 100%;">';
                 badgeDefs.forEach(b => {
-                    if (badges[b.id] && badges[b.id] > 0) {
-                        let countStr = (!b.oneTime && badges[b.id] > 1) ? `<span style="font-size:0.7rem; color:var(--text-muted); font-weight:bold; margin-left:2px;">x${badges[b.id]}</span>` : '';
-                        badgesHtml += `<div style="display:inline-flex; align-items:center;"><span class="badge-icon" title="${b.desc}">${b.emoji}</span>${countStr}</div>`;
-                    }
+                    let count = badges[b.id] || 0;
+                    let earned = count > 0;
+                    let filter = earned ? 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.4))' : 'grayscale(100%) opacity(30%)';
+                    let countStr = (!b.oneTime && count > 1) ? `<div style="font-size:0.75rem; color:var(--text-main); font-weight:bold; margin-top: 4px; background:rgba(0,0,0,0.8); border-radius:10px;">x${count}</div>` : '';
+                    badgesHtml += `
+                        <div title="${b.desc}" style="display:flex; flex-direction:column; align-items:center; cursor:help;">
+                            <div style="font-size: 2.2rem; filter: ${filter}; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='none'">${b.emoji}</div>
+                            ${earned ? countStr : ''}
+                        </div>
+                    `;
                 });
-                
-                if (badgesHtml === "") {
-                    badgesHtml = `<span style="color: #666; font-size: 0.8rem; font-family: sans-serif; font-style: italic;">No badges earned yet</span>`;
-                }
-                document.getElementById('card-badges-display').innerHTML = badgesHtml;
+                badgesHtml += '</div>';
+                document.getElementById('card-trophies-container').innerHTML = badgesHtml;
 
-                // HISTORY TABLE
+                // HISTORY TABLE WITH CAREER HIGHS
                 const tbody = document.getElementById('card-table-body');
                 tbody.innerHTML = '';
                 const history = data.seriesHistory || [];
@@ -1394,11 +1391,21 @@
 
                 tbody.innerHTML += `
                     <tr class="career-row">
-                        <td colspan="2">CAREER</td>
+                        <td colspan="2">CAREER AVG</td>
                         <td>${cPpg}</td>
                         <td>${cRpg}</td>
                         <td>${cApg}</td>
                         <td>${cFgp}%</td>
+                    </tr>
+                `;
+
+                // Career Highs Display
+                let cHighs = data.careerHighs || { pts: 0, reb: 0, ast: 0, blk: 0, stl: 0 };
+                tbody.innerHTML += `
+                    <tr>
+                        <td colspan="6" style="padding: 10px; background: #000; color: var(--highlight-border); font-size: 0.75rem; border-top: 1px solid #333; letter-spacing: 1px;">
+                            CAREER HIGHS: <span style="color:#fff">PTS</span> ${cHighs.pts} | <span style="color:#fff">REB</span> ${cHighs.reb} | <span style="color:#fff">AST</span> ${cHighs.ast} | <span style="color:#fff">BLK</span> ${cHighs.blk} | <span style="color:#fff">STL</span> ${cHighs.stl}
+                        </td>
                     </tr>
                 `;
 
@@ -1474,6 +1481,10 @@
     let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
     let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
     let pendingGameWinner = '';
+
+    // Track Single Game Highs and Badges during a series
+    let p1SingleGameBadges = [];
+    let p1SeriesHighs = { pts: 0, reb: 0, ast: 0, blk: 0, stl: 0 };
 
     window.toggleCPU = function() {
         const isCpu = document.getElementById('cpu-toggle').checked;
@@ -1557,6 +1568,10 @@
             gamesPlayed = 0;
             p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
             p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
+
+            // Reset local badge and high trackers
+            p1SingleGameBadges = [];
+            p1SeriesHighs = { pts: 0, reb: 0, ast: 0, blk: 0, stl: 0 };
 
             document.getElementById('series-splash-overlay').style.display = 'none';
             document.getElementById('p1-profile').value = 'none';
@@ -1653,12 +1668,14 @@
     }
 
     function triggerSeriesEnd(champName, champPrefix) {
-        playSound('sfx-cheer');
-        triggerVibration([200, 100, 200, 100, 400]);
+        if (champPrefix === 'p1') {
+            playSound('sfx-cheer');
+            triggerVibration([200, 100, 200, 100, 400]);
+        }
 
         const p1Profile = document.getElementById('p1-profile').value;
         const p2Profile = document.getElementById('p2-profile').value;
-        const oppArch = p2Profile; // Tracker for the opponent's archetype
+        const oppArch = p2Profile; 
         
         document.getElementById('splash-champ').innerText = `🏆 ${champName} WINS! 🏆`;
         document.getElementById('splash-champ-avatar').src = champPrefix === 'p1' ? profiles[p1Profile].img : profiles[p2Profile].img;
@@ -1744,11 +1761,15 @@
 
                     if (!currentBadges['tipoff']) currentBadges['tipoff'] = 1;
 
+                    // Add our Single Game Badges we accumulated this series
+                    p1SingleGameBadges.forEach(b => {
+                        currentBadges[b] = (currentBadges[b] || 0) + 1;
+                    });
+
                     if (wonSeries) {
                         if (p1SeriesWins === 4 && p2SeriesWins === 0) currentBadges['sweep'] = (currentBadges['sweep'] || 0) + 1;
                         if (p1SeriesWins === 4 && p2SeriesWins === 3) currentBadges['ironman'] = (currentBadges['ironman'] || 0) + 1;
                         
-                        // Archetype Slayer Badges
                         let slayerId = 'slayer_' + oppArch;
                         currentBadges[slayerId] = (currentBadges[slayerId] || 0) + 1;
                     }
@@ -1770,6 +1791,16 @@
                         if (!currentBadges['dynasty']) currentBadges['dynasty'] = 1;
                     }
 
+                    // Save Career Highs
+                    let cHighs = data.careerHighs || { pts: 0, reb: 0, ast: 0, blk: 0, stl: 0 };
+                    let newHighs = {
+                        pts: Math.max(cHighs.pts || 0, p1SeriesHighs.pts),
+                        reb: Math.max(cHighs.reb || 0, p1SeriesHighs.reb),
+                        ast: Math.max(cHighs.ast || 0, p1SeriesHighs.ast),
+                        blk: Math.max(cHighs.blk || 0, p1SeriesHighs.blk),
+                        stl: Math.max(cHighs.stl || 0, p1SeriesHighs.stl)
+                    };
+
                     updateDoc(userRef, {
                         seriesWins: increment(wonSeries ? 1 : 0),
                         seriesLosses: increment(wonSeries ? 0 : 1),
@@ -1784,6 +1815,7 @@
                         total3ptMakes: increment(p1SeriesStats.fg3_makes),
                         total3ptAttempts: increment(p1SeriesStats.fg3_attempts),
                         currentStreak: newStreak,
+                        careerHighs: newHighs,
                         achievements: currentBadges,
                         archetypeCounts: newCounts,
                         archetypeMatchups: matchups,
@@ -1843,8 +1875,40 @@
         playSound('sfx-buzzer');
         triggerVibration([100, 50, 100]);
 
-        p1SeriesStats.pts += p1Data.pts; p1SeriesStats.ast += p1Data.ast_makes; p1SeriesStats.treb += p1Data.treb;
-        p1SeriesStats.stl += p1Data.stl_makes; p1SeriesStats.blk += p1Data.blk_makes;
+        // Evaluate Single Game Badges and Career Highs for Player 1
+        let p1GamePts = p1Data.pts || 0;
+        let p1GameReb = p1Data.treb || 0;
+        let p1GameAst = p1Data.ast_makes || 0;
+        let p1GameBlk = p1Data.blk_makes || 0;
+        let p1GameStl = p1Data.stl_makes || 0;
+
+        // Track Highs
+        if (p1GamePts > p1SeriesHighs.pts) p1SeriesHighs.pts = p1GamePts;
+        if (p1GameReb > p1SeriesHighs.reb) p1SeriesHighs.reb = p1GameReb;
+        if (p1GameAst > p1SeriesHighs.ast) p1SeriesHighs.ast = p1GameAst;
+        if (p1GameBlk > p1SeriesHighs.blk) p1SeriesHighs.blk = p1GameBlk;
+        if (p1GameStl > p1SeriesHighs.stl) p1SeriesHighs.stl = p1GameStl;
+
+        // Evaluate Counting Badges
+        if (p1GamePts >= 40) p1SingleGameBadges.push('chamberlain');
+        if (p1GameReb >= 20) p1SingleGameBadges.push('worm');
+        if (p1GameAst >= 15) p1SingleGameBadges.push('dimedropper');
+        if (p1GameBlk >= 10) p1SingleGameBadges.push('notinmyhouse');
+
+        let doubleDigitCount = 0;
+        if (p1GamePts >= 10) doubleDigitCount++;
+        if (p1GameReb >= 10) doubleDigitCount++;
+        if (p1GameAst >= 10) doubleDigitCount++;
+        if (p1GameBlk >= 10) doubleDigitCount++;
+        if (p1GameStl >= 10) doubleDigitCount++;
+        if (doubleDigitCount >= 3) p1SingleGameBadges.push('tripledouble');
+
+        if (p1GamePts >= 5 && p1GameReb >= 5 && p1GameAst >= 5 && p1GameBlk >= 5 && p1GameStl >= 5) {
+            p1SingleGameBadges.push('fivebyfive');
+        }
+
+        p1SeriesStats.pts += p1GamePts; p1SeriesStats.ast += p1GameAst; p1SeriesStats.treb += p1GameReb;
+        p1SeriesStats.stl += p1GameStl; p1SeriesStats.blk += p1GameBlk;
         p1SeriesStats.fg_makes += (p1Data.fg2_makes + p1Data.fg3_makes); p1SeriesStats.fg_attempts += (p1Data.fg2_attempts + p1Data.fg3_attempts);
         p1SeriesStats.fg3_makes += p1Data.fg3_makes; p1SeriesStats.fg3_attempts += p1Data.fg3_attempts;
         
