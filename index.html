@@ -424,17 +424,18 @@
         .card-badges {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 12px;
             margin-bottom: 15px;
             z-index: 2;
             width: 100%;
-            min-height: 35px; /* Keeps layout stable even if no badges */
+            min-height: 35px; /* Keeps layout stable */
         }
 
         .badge-icon {
             font-size: 1.8rem;
             filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
-            cursor: help; /* Shows a question mark mouse pointer to hint at the tooltip */
+            cursor: help; 
             transition: transform 0.2s;
         }
 
@@ -744,7 +745,7 @@
     </div>
 </div>
 
-<!-- Public/Private Card Splash Screen -->
+<!-- Public/Private Card Splash Screen (Higher z-index to pop over leaderboard) -->
 <div class="splash-overlay" id="card-overlay" style="z-index: 1600;">
     <div class="bball-card">
         <img id="card-frame-image" src="" class="card-frame" onerror="this.style.display='none'">
@@ -1202,10 +1203,17 @@
             // Populate Badges
             let badgesHtml = "";
             let badges = data.achievements || [];
+            
+            if (badges.includes('tipoff')) badgesHtml += `<span class="badge-icon" title="Tip-Off: Complete your first series">🏀</span>`;
             if (badges.includes('sweep')) badgesHtml += `<span class="badge-icon" title="The Sweep: Win a series with a flawless 4-0 record">🧹</span>`;
             if (badges.includes('ice')) badgesHtml += `<span class="badge-icon" title="Ice in the Veins: Win a game in Overtime">🧊</span>`;
             if (badges.includes('sharpshooter')) badgesHtml += `<span class="badge-icon" title="Sharpshooter: Finish a series with 50%+ 3PT">🎯</span>`;
             if (badges.includes('brickwall')) badgesHtml += `<span class="badge-icon" title="Brick Wall: Average 3.0+ Blocks in a series">🧱</span>`;
+            
+            if (badges.length === 0) {
+                badgesHtml = `<span style="color: #666; font-size: 0.8rem; font-family: sans-serif; font-style: italic;">No badges earned yet</span>`;
+            }
+            
             document.getElementById('card-badges-display').innerHTML = badgesHtml;
 
             const tbody = document.getElementById('card-table-body');
@@ -1287,7 +1295,6 @@
     let p1SeriesWins = 0, p2SeriesWins = 0;
     let gamesPlayed = 0;
     
-    // Notice `otWins` tracks overtime games won by P1 in this specific series
     let p1SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
     let p2SeriesStats = { pts: 0, ast: 0, treb: 0, stl: 0, blk: 0, fg_makes: 0, fg_attempts: 0, fg3_makes: 0, fg3_attempts: 0, otWins: 0 };
     let pendingGameWinner = '';
@@ -1504,15 +1511,13 @@
                     let newStreak = wonSeries ? (data.currentStreak || 0) + 1 : 0;
                     let currentBadges = data.achievements || [];
                     
+                    if (!currentBadges.includes('tipoff')) currentBadges.push('tipoff');
+
                     if (wonSeries) {
-                        // The Sweep
                         if (p1SeriesWins === 4 && p2SeriesWins === 0 && !currentBadges.includes('sweep')) currentBadges.push('sweep');
-                        // Ice in the Veins
                         if (p1SeriesStats.otWins > 0 && !currentBadges.includes('ice')) currentBadges.push('ice');
-                        // Sharpshooter
                         let tpPct = p1SeriesStats.fg3_attempts > 0 ? (p1SeriesStats.fg3_makes / p1SeriesStats.fg3_attempts) * 100 : 0;
                         if (tpPct >= 50 && p1SeriesStats.fg3_attempts > 0 && !currentBadges.includes('sharpshooter')) currentBadges.push('sharpshooter');
-                        // Brick Wall
                         if ((p1SeriesStats.blk / gamesPlayed) >= 3.0 && !currentBadges.includes('brickwall')) currentBadges.push('brickwall');
                     }
 
@@ -1576,7 +1581,6 @@
     function closeOvertimeSplash() {
         document.getElementById('ot-splash-overlay').style.display = 'none';
         
-        // Track OT wins for achievements
         if (pendingGameWinner === 'p1') p1SeriesStats.otWins++;
         else p2SeriesStats.otWins++;
         
