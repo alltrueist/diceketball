@@ -453,10 +453,15 @@
         .card-table-wrapper {
             width: 100%;
             background: rgba(0,0,0,0.6);
+            border-radius: 8px;
             border: 1px solid #444;
             z-index: 2;
-            min-height: 200px;
+            /* FIX: Prevents overlap with Close button */
+            overflow-y: auto;
+            max-height: 250px; 
+            min-height: 100px;
             box-sizing: border-box;
+            margin-bottom: 10px; 
         }
 
         .card-table {
@@ -472,6 +477,8 @@
             padding: 8px 2px;
             border-bottom: 1px solid #444;
             text-transform: uppercase;
+            position: sticky;
+            top: 0;
         }
 
         .card-table td {
@@ -800,12 +807,11 @@
             <!-- Populated by JS -->
         </div>
 
-        <!-- NEW TROPHY GRID CONTAINER -->
-        <div id="card-trophies-container" class="card-table-wrapper" style="display: none; padding: 15px 5px; box-sizing: border-box; overflow-y: auto; max-height: 250px;">
+        <div id="card-trophies-container" class="card-table-wrapper" style="display: none; padding: 15px 5px;">
             <!-- Populated by JS -->
         </div>
 
-        <button class="btn-action" style="display: block; width: 100%; margin-top: 20px; z-index: 20; padding: 10px;" onclick="closeCardOverlay()">CLOSE CARD</button>
+        <button class="btn-action" style="display: block; width: 100%; margin-top: 10px; z-index: 20; padding: 10px;" onclick="closeCardOverlay()">CLOSE CARD</button>
     </div>
 </div>
 
@@ -1316,7 +1322,6 @@
                     badges = migrated;
                 }
 
-                // CHANGED: Dime Dropper is now Money Bag (💰) and Interceptor is now Scissors (✂️) for max compatibility!
                 const badgeDefs = [
                     { id: 'tipoff', emoji: '🏀', desc: 'Tip-Off: Complete your first series', oneTime: true },
                     { id: 'sweep', emoji: '🧹', desc: 'The Sweep: Win a series with a flawless 4-0 record' },
